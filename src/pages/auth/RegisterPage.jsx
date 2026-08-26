@@ -48,8 +48,11 @@ export default function RegistrationPage() {
     }
   };
 
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
+  const isGoogleConfigured = clientId && !clientId.startsWith("your-google-client-id");
+
   React.useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
+    if (!isGoogleConfigured) return;
     const interval = setInterval(() => {
       if (window.google) {
         clearInterval(interval);
@@ -64,7 +67,7 @@ export default function RegistrationPage() {
       }
     }, 100);
     return () => clearInterval(interval);
-  }, []);
+  }, [isGoogleConfigured, clientId]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
@@ -114,13 +117,17 @@ export default function RegistrationPage() {
                 Create Account
               </Button>
             </form>
-            <div className="relative my-4 flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <span className="relative bg-surface px-3 text-xs text-ink-muted uppercase">Or continue with</span>
-            </div>
-            <div id="google-signin-btn" className="w-full flex justify-center mt-2 min-h-[40px]"></div>
+            {isGoogleConfigured && (
+              <>
+                <div className="relative my-4 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <span className="relative bg-surface px-3 text-xs text-ink-muted uppercase">Or continue with</span>
+                </div>
+                <div id="google-signin-btn" className="w-full flex justify-center mt-2 min-h-[40px]"></div>
+              </>
+            )}
           </CardContent>
 
           <CardFooter className="text-center text-sm border-t border-border pt-5">
