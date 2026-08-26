@@ -1,9 +1,13 @@
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export async function request(path, options = {}) {
   const { body, headers, parse = 'json', ...rest } = options;
 
-  const response = await fetch(path, {
+  const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
+
+  const response = await fetch(url, {
     credentials: 'include',
     headers: {
       ...(body !== undefined ? JSON_HEADERS : {}),
