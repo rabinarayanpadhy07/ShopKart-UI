@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { useNavigate } from "react-router-dom";
 import { Trash2, Minus, Plus, ShoppingBag, MapPin } from "lucide-react";
+import { StoreLayout } from "@/components/layout/StoreLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
@@ -186,9 +185,7 @@ const CartPage = () => {
   const shipping = (totalProducts() > 0 && parseFloat(subtotal) < 499) ? (5.0 * 74).toFixed(2) : "0.00"; // Free delivery above 499
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header cartCount={totalProducts()} username={username} />
-      <main className="flex-grow max-w-7xl mx-auto w-full py-8 px-4 md:px-8">
+    <StoreLayout cartCount={totalProducts()} username={username} mainClassName="flex-grow max-w-7xl mx-auto w-full py-8 px-4 md:px-8">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-grow lg:w-2/3 space-y-6">
             <Card className="bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden">
@@ -373,9 +370,7 @@ const CartPage = () => {
             </div>
           )}
         </div>
-      </main>
-      <Footer />
-    </div>
+    </StoreLayout>
   );
 };
 

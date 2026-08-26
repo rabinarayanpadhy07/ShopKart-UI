@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
-const CustomModal = ({ modalType, onClose, onSubmit, response }) => {
+const CustomModal = ({ modalType, onClose, onSubmit, response, initialUser, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -359,7 +359,7 @@ const CustomModal = ({ modalType, onClose, onSubmit, response }) => {
 
         {/* ModifyUser */}
         {modalType === "modifyUser" && (
-          <ModifyUserFormComponent onClose={onClose} />
+          <ModifyUserFormComponent onClose={onClose} initialUser={initialUser} onSuccess={onSuccess} />
         )}
       </div>
     </div>
@@ -368,9 +368,9 @@ const CustomModal = ({ modalType, onClose, onSubmit, response }) => {
 
 export default CustomModal;
 
-const ModifyUserFormComponent = ({ onClose }) => {
-  const [userId, setUserId] = useState("");
-  const [userDetails, setUserDetails] = useState(null);
+const ModifyUserFormComponent = ({ onClose, initialUser, onSuccess }) => {
+  const [userId, setUserId] = useState(initialUser?.userId || "");
+  const [userDetails, setUserDetails] = useState(initialUser || null);
   const [updated, setUpdated] = useState(false);
 
   const handleFetchUser = async (e) => {
@@ -425,6 +425,7 @@ const ModifyUserFormComponent = ({ onClose }) => {
         const user = await response.json();
         setUpdated(true);
         setUserDetails(user);
+        if (onSuccess) onSuccess();
       } else {
         const errData = await response.json().catch(() => ({}));
         alert(errData.error || "Failed to update user");

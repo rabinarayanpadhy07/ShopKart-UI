@@ -4,10 +4,10 @@ import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import AdminLoginPage from '@/pages/auth/AdminLoginPage';
-import CartPage from '@/pages/CartPage';
-import OrdersPage from '@/pages/OrdersPage';
-import WishlistPage from '@/pages/WishlistPage';
-import AddressesPage from '@/pages/AddressesPage';
+import CartPage from '@/pages/cart/CartPage';
+import OrdersPage from '@/pages/orders/OrdersPage';
+import WishlistPage from '@/pages/wishlist/WishlistPage';
+import AddressesPage from '@/pages/account/AddressesPage';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 
 export default function AppRoutes() {

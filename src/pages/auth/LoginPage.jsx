@@ -38,6 +38,44 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleCredentialResponse = async (response) => {
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.role === "ADMIN") navigate("/admindashboard");
+        else navigate("/");
+      } else {
+        throw new Error(data.error || "Google Sign-In failed");
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  React.useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
+    const interval = setInterval(() => {
+      if (window.google) {
+        clearInterval(interval);
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+        });
+        window.google.accounts.id.renderButton(
+          document.getElementById("google-signin-btn"),
+          { theme: "outline", size: "large", width: "382", text: "continue_with" }
+        );
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
@@ -76,6 +114,13 @@ export default function LoginPage() {
               </div>
               <Button type="submit" className="w-full h-11 rounded-xl mt-2">Sign In</Button>
             </form>
+            <div className="relative my-4 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <span className="relative bg-surface px-3 text-xs text-ink-muted uppercase">Or continue with</span>
+            </div>
+            <div id="google-signin-btn" className="w-full flex justify-center mt-2 min-h-[40px]"></div>
           </CardContent>
 
           <CardFooter className="flex flex-col gap-2 text-center text-sm border-t border-border pt-5">

@@ -13,6 +13,28 @@ export function Header({ cartCount, username, onSearch, initialSearch = "" }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const boxRef = useRef(null);
   const debounceRef = useRef(null);
+  const [pincode, setPincode] = useState("423651");
+
+  useEffect(() => {
+    if (username && username !== 'Guest') {
+      fetch('/api/addresses', { credentials: 'include' })
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Failed to fetch');
+        })
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            const defaultAddress = data.find(addr => addr.isDefault) || data[0];
+            if (defaultAddress && defaultAddress.zipCode) {
+              setPincode(defaultAddress.zipCode);
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching user address:", err));
+    } else {
+      setPincode("423651");
+    }
+  }, [username]);
 
   useEffect(() => {
     const onClickOutside = (e) => {
@@ -100,7 +122,7 @@ export function Header({ cartCount, username, onSearch, initialSearch = "" }) {
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3 w-3 text-brand-muted" strokeWidth={2} />
-              Deliver to <span className="text-white font-medium">423651</span>
+              Deliver to <span className="text-white font-medium">{pincode}</span>
             </span>
           </div>
         </div>

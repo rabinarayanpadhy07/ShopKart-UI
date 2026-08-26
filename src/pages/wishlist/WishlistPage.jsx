@@ -45,9 +45,24 @@ export default function WishlistPage() {
     }
   };
 
+  const fetchUserInfo = async () => {
+    try {
+      const response = await fetch("/api/users/me", {
+        credentials: "include"
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsername(data.username);
+      }
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+    }
+  };
+
   useEffect(() => {
     fetchWishlist();
     fetchCartCount();
+    fetchUserInfo();
   }, []);
 
   const handleRemove = async (productId) => {

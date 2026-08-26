@@ -11,3 +11,7 @@ export function logout() {
 export function register(payload) {
   return request('/api/users/register', { method: 'POST', body: payload });
 }
+
+export function googleLogin(credential) {
+  return request('/api/auth/google', { method: 'POST', body: { credential } });
+}

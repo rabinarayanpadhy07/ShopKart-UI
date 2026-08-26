@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { useCartCount } from '@/hooks/useCartCount';
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -184,6 +185,8 @@ export default function OrdersPage() {
                         order.status === 'DELIVERED' ? 'bg-green-50 text-green-700 border-green-200' :
                         order.status === 'RETURN_REQUESTED' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                         order.status === 'RETURN_APPROVED' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                        order.status === 'RETURN_REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        order.status === 'ITEM_PICKED_UP' ? 'bg-purple-50 text-purple-700 border-purple-200' :
                         order.status === 'RETURNED' || order.status === 'REFUNDED' ? 'bg-gray-50 text-gray-700 border-gray-200' :
                         'bg-blue-50 text-blue-700 border-blue-200'
                       }`}>
@@ -210,6 +213,12 @@ export default function OrdersPage() {
                         )}
                         {order.status === 'RETURN_REQUESTED' && order.return_reason && (
                           <p className="text-xs font-semibold text-amber-500">Return Reason: {order.return_reason}</p>
+                        )}
+                        {order.status === 'RETURN_APPROVED' && (
+                          <p className="text-xs font-semibold text-teal-600">Return Accepted (Refund/Exchange in process)</p>
+                        )}
+                        {order.status === 'RETURN_REJECTED' && (
+                          <p className="text-xs font-semibold text-rose-600">Return Request Declined by Admin</p>
                         )}
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 text-xs sm:text-sm text-slate-600">
