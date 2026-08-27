@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Lock, AlertCircle, Shield } from "lucide-react";
 import Logo from "@/components/layout/Logo";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { login } from "@/api/auth";
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignIn = async (e) => {
@@ -21,29 +24,29 @@ export default function AdminLoginPage() {
       return;
     }
 
+    setLoading(true);
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.role === "ADMIN") {
-          navigate("/admindashboard");
-        } else {
-          setError("Access denied. Admin role required.");
-        }
+      const data = await login(username, password);
+      if (data.role === "ADMIN") {
+        navigate("/admindashboard");
       } else {
-        throw new Error(data.error || "Something went wrong. Please try again.");
+        setError("Access denied. Admin role required.");
       }
     } catch (err) {
       setError(err.message || "Unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleGoogleSuccess = useCallback((data) => {
+    if (data.role === "ADMIN") navigate("/admindashboard");
+    else setError("Access denied. Admin role required.");
+  }, [navigate]);
+
+  const handleGoogleError = useCallback((message) => {
+    setError(message);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -83,10 +86,16 @@ export default function AdminLoginPage() {
                   <Input id="password" type="password" placeholder="Admin password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required />
                 </div>
               </div>
-              <Button type="submit" variant="secondary" className="w-full h-11 rounded-xl mt-2">
-                Enter as Admin
+              <Button type="submit" disabled={loading} variant="secondary" className="w-full h-11 rounded-xl mt-2">
+                {loading ? "Signing in..." : "Enter as Admin"}
               </Button>
             </form>
+            <GoogleSignInButton
+              text="signin_with"
+              expectedRole="ADMIN"
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+            />
           </CardContent>
 
           <CardFooter className="flex flex-col text-center text-sm border-t border-border pt-5">

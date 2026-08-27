@@ -6,7 +6,6 @@ export function useCartCount() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
     try {
       const count = await getCartCount();
       setCartCount(typeof count === 'number' ? count : 0);

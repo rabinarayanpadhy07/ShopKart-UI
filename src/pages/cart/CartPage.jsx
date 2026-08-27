@@ -5,6 +5,25 @@ import { StoreLayout } from "@/components/layout/StoreLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
+const loadRazorpay = () => {
+  if (window.Razorpay) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("razorpay-checkout-script");
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Failed to load Razorpay")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "razorpay-checkout-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay"));
+    document.body.appendChild(script);
+  });
+};
+
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [username, setUsername] = useState("");
@@ -120,6 +139,8 @@ const CartPage = () => {
     }
 
     try {
+      await loadRazorpay();
+
       // Create Razorpay order via backend, passing addressId
       const response = await fetch("/api/payment/create", {
         method: "POST",

@@ -63,7 +63,7 @@ export default function CustomerHomePage() {
     const category = overrides.category ?? selectedCategory;
     const page = overrides.page ?? currentPage;
     try {
-      const params = { page: String(page), size: '24' };
+      const params = { page: String(page), size: '12' };
       if (search) params.search = search;
       if (category) params.category = category;
       const data = await getProducts(params);
@@ -153,7 +153,7 @@ export default function CustomerHomePage() {
               </div>
             </div>
             <div className="relative hidden md:flex items-center justify-center p-8">
-              <img src={slide.image} alt="" className="max-h-56 object-contain drop-shadow-xl rounded-2xl" />
+              <img src={slide.image} alt="" className="max-h-56 object-contain drop-shadow-xl rounded-2xl" loading="eager" decoding="async" width="400" height="224" />
             </div>
           </div>
           <button onClick={() => setActiveSlide(p => (p - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)} className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface cursor-pointer shadow-sm">

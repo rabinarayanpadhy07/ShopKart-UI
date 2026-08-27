@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Package, Heart, MapPin, LogOut, ChevronDown } from 'lucide-react';
 import { logout } from '@/api/auth';
-import useravatar from '@/assets/images/useravatar.png';
 
 export function ProfileDropdown({ username }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,8 +16,8 @@ export function ProfileDropdown({ username }) {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-      if (res.ok) navigate('/');
+      await logout();
+      navigate('/');
     } catch (e) { console.error(e); }
   };
 
@@ -29,7 +28,9 @@ export function ProfileDropdown({ username }) {
         className="flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl hover:bg-muted-bg transition-colors cursor-pointer min-w-[52px]"
       >
         <div className="flex items-center gap-1">
-          <img src={useravatar} alt="" className="h-6 w-6 rounded-full object-cover border border-border" onError={(e) => { e.target.src = 'https://via.placeholder.com/32?text=U'; }} />
+          <div className="h-6 w-6 rounded-full bg-muted-bg border border-border flex items-center justify-center">
+            <User className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+          </div>
           <ChevronDown className={`h-3 w-3 text-ink-muted hidden sm:block transition-transform ${isOpen ? 'rotate-180' : ''}`} strokeWidth={2.5} />
         </div>
         <span className="text-[10px] font-semibold text-ink max-w-[60px] truncate">{username}</span>

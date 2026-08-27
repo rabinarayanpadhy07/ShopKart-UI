@@ -1,15 +1,23 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Lock, AlertCircle } from "lucide-react";
 import Logo from "@/components/layout/Logo";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { login } from "@/api/auth";
+
+function redirectAfterAuth(navigate, role) {
+  if (role === "ADMIN") navigate("/admindashboard");
+  else navigate("/");
+}
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignIn = async (e) => {
@@ -19,74 +27,31 @@ export default function LoginPage() {
       setError("Username and password are required");
       return;
     }
+    setLoading(true);
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        if (data.role === "ADMIN") navigate("/admindashboard");
-        else navigate("/");
-      } else {
-        throw new Error(data.error || "Something went wrong");
-      }
+      const data = await login(username, password);
+      redirectAfterAuth(navigate, data.role);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleGoogleCredentialResponse = async (response) => {
-    setError(null);
-    try {
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: response.credential }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        if (data.role === "ADMIN") navigate("/admindashboard");
-        else navigate("/");
-      } else {
-        throw new Error(data.error || "Google Sign-In failed");
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  const handleGoogleSuccess = useCallback((data) => {
+    redirectAfterAuth(navigate, data.role);
+  }, [navigate]);
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
-  const isGoogleConfigured = clientId && !clientId.startsWith("your-google-client-id");
-
-  React.useEffect(() => {
-    if (!isGoogleConfigured) return;
-    const interval = setInterval(() => {
-      if (window.google) {
-        clearInterval(interval);
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredentialResponse,
-        });
-        window.google.accounts.id.renderButton(
-          document.getElementById("google-signin-btn"),
-          { theme: "outline", size: "large", width: "382", text: "continue_with" }
-        );
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isGoogleConfigured, clientId]);
+  const handleGoogleError = useCallback((message) => {
+    setError(message);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
         <Card className="shadow-[0_8px_30px_rgba(0,0,0,0.06)] border-border">
           <CardHeader className="text-center pb-2 flex flex-col items-center gap-4">
-            <div className="mb-1">
-              <Logo size="large" />
-            </div>
+            <Logo size="large" />
             <div>
               <CardTitle className="text-xl">Welcome back</CardTitle>
               <CardDescription>Sign in to your ShopKart account</CardDescription>
@@ -115,24 +80,23 @@ export default function LoginPage() {
                   <Input id="password" type="password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11 rounded-xl mt-2">Sign In</Button>
+              <Button type="submit" disabled={loading} className="w-full h-11 rounded-xl mt-2">
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
             </form>
-            {isGoogleConfigured && (
-              <>
-                <div className="relative my-4 flex items-center justify-center">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border"></div>
-                  </div>
-                  <span className="relative bg-surface px-3 text-xs text-ink-muted uppercase">Or continue with</span>
-                </div>
-                <div id="google-signin-btn" className="w-full flex justify-center mt-2 min-h-[40px]"></div>
-              </>
-            )}
+            <GoogleSignInButton
+              text="signin_with"
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+            />
           </CardContent>
 
           <CardFooter className="flex flex-col gap-2 text-center text-sm border-t border-border pt-5">
             <a href="/register" className="text-brand hover:text-brand-hover font-semibold transition-colors">
               Create a new account
+            </a>
+            <a href="/admin" className="text-xs text-ink-muted hover:text-ink">
+              Admin sign in
             </a>
           </CardFooter>
         </Card>
