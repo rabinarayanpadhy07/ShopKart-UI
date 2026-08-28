@@ -95,9 +95,6 @@ export default function LoginPage() {
             <a href="/register" className="text-brand hover:text-brand-hover font-semibold transition-colors">
               Create a new account
             </a>
-            <a href="/admin" className="text-xs text-ink-muted hover:text-ink">
-              Admin sign in
-            </a>
           </CardFooter>
         </Card>
       </div>
