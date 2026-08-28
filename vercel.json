@@ -1,14 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://YOUR_RENDER_BACKEND_URL/api/:path*"
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "https://YOUR_RENDER_BACKEND_URL/admin/:path*"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
