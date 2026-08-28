@@ -17,13 +17,14 @@ export function ProductList({ products, onAddToCart, onAddToWishlist }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-      {products.map((product) => {
+      {products.map((product, index) => {
         const hasImage = product.images?.length > 0;
         const imageUrl = hasImage ? product.images[0] : 'https://via.placeholder.com/300?text=No+Image';
         const discountPct = product.product_id % 3 === 0 ? 56 : product.product_id % 2 === 0 ? 40 : 25;
         const priceVal = parseFloat(product.price);
         const originalPrice = (priceVal / (1 - discountPct / 100)).toFixed(0);
         const savedAmt = (originalPrice - priceVal).toFixed(0);
+        const isAboveFold = index < 4;
 
         return (
           <article
@@ -52,7 +53,7 @@ export function ProductList({ products, onAddToCart, onAddToWishlist }) {
                 src={imageUrl}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
+                loading={isAboveFold ? "eager" : "lazy"}
                 decoding="async"
                 onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=No+Image'; }}
               />
