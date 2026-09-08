@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Minus, Plus, ShoppingBag, MapPin } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, MapPin, Sparkles, Truck } from "lucide-react";
 import { StoreLayout } from "@/components/layout/StoreLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -123,6 +123,12 @@ const CartPage = () => {
       return;
     }
 
+    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKeyId || razorpayKeyId.startsWith("your-razorpay")) {
+      toast.error("Payments aren't configured yet. Set VITE_RAZORPAY_KEY_ID to enable checkout.");
+      return;
+    }
+
     try {
       await loadRazorpay();
 
@@ -133,13 +139,15 @@ const CartPage = () => {
         parse: "text",
       });
 
-      // Open Razorpay checkout interface
+      // Open Razorpay checkout interface. `order_id` is the single source of truth
+      // for the charged amount (it was computed server-side from the DB cart) - we
+      // deliberately omit `amount` here since a client-computed value that drifts
+      // from the order's actual amount causes Razorpay to reject the checkout.
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: Math.round((parseFloat(subtotal) + parseFloat(shipping)) * 100),
         currency: "INR",
         name: "ShopKart",
-        description: "Test Transaction",
+        description: "Order Payment",
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
@@ -154,7 +162,7 @@ const CartPage = () => {
             });
             apiCache.invalidate("cart");
             toast.success("Payment verified successfully!");
-            navigate("/");
+            navigate("/orders");
           } catch (error) {
             console.error("Error verifying payment:", error);
             toast.error("Payment verification failed. Please try again.");
@@ -162,8 +170,6 @@ const CartPage = () => {
         },
         prefill: {
           name: username,
-          email: "test@example.com",
-          contact: "9999999999",
         },
         theme: { color: "#F97316" },
       };
@@ -189,31 +195,42 @@ const CartPage = () => {
           className="flex flex-col lg:flex-row gap-8"
         >
           <div className="flex-grow lg:w-2/3 space-y-6">
-            <Card className="bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden">
-              <CardHeader className="border-b border-gray-100 bg-slate-50/50">
+            <Card className="bg-surface border border-border shadow-sm rounded-2xl overflow-hidden">
+              <CardHeader className="border-b border-border bg-muted-bg/50">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-brand-light">
                     <ShoppingBag className="h-5 w-5 text-brand" strokeWidth={2} />
                   </div>
                   <div>
-                    <CardTitle className="text-xl font-bold text-slate-800">Shopping Cart</CardTitle>
+                    <CardTitle className="text-xl font-bold text-ink">Shopping Cart</CardTitle>
                     <CardDescription>
                       {cartItems.length} item{cartItems.length === 1 ? "" : "s"} in your cart
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="divide-y divide-gray-150 p-6">
+              <CardContent className="p-6">
                 {loading ? (
-                  <div className="text-center py-10 text-slate-500">Loading your cart...</div>
+                  <div className="space-y-4 animate-pulse">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-5 bg-muted-bg/60 rounded-2xl p-4">
+                        <div className="h-24 w-24 rounded-xl bg-border/60 shrink-0" />
+                        <div className="flex-grow space-y-2">
+                          <div className="h-4 w-2/5 rounded bg-border/60" />
+                          <div className="h-3 w-3/5 rounded bg-border/40" />
+                          <div className="h-3 w-1/5 rounded bg-border/40" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : cartItems.length === 0 ? (
-                  <div className="text-center py-20 text-slate-500">
-                    <div className="p-5 rounded-full bg-slate-100 inline-flex mb-4">
-                      <ShoppingBag className="w-10 h-10 text-slate-300" strokeWidth={1.5} />
+                  <div className="text-center py-20">
+                    <div className="p-5 rounded-full bg-muted-bg inline-flex mb-4">
+                      <ShoppingBag className="w-10 h-10 text-ink-muted/60" strokeWidth={1.5} />
                     </div>
-                    <p className="text-lg font-semibold mb-2 text-slate-700">Your Cart is Empty</p>
-                    <p className="text-sm text-slate-400 mb-4">Add some products to get started</p>
-            <Button onClick={() => navigate("/")} size="sm">
+                    <p className="text-lg font-semibold mb-2 text-ink">Your cart is empty</p>
+                    <p className="text-sm text-ink-muted mb-4">Add some products to get started</p>
+                    <Button onClick={() => navigate("/")} size="sm">
                       Start Shopping
                     </Button>
                   </div>
@@ -228,46 +245,53 @@ const CartPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -24, transition: { duration: 0.2 } }}
                         transition={{ duration: 0.25, ease: 'easeOut' }}
-                        className="p-4 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-white border border-gray-200 rounded-2xl hover:shadow-md transition-shadow"
+                        className="relative flex flex-col sm:flex-row items-center gap-5 bg-surface border border-border rounded-2xl p-4 sm:p-5 hover:shadow-md hover:border-brand-muted/50 transition-all"
                       >
                         <img
                           src={item.image_url || IMAGE_FALLBACK}
                           alt={item.name}
-                          className="h-24 w-24 rounded-xl object-cover bg-slate-50 border border-gray-100 flex-shrink-0"
+                          className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover bg-muted-bg border border-border flex-shrink-0"
                           onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                         />
-                        <div className="flex-grow text-center sm:text-left space-y-1">
-                          <h3 className="text-base font-bold text-slate-800">{item.name}</h3>
-                          <p className="text-xs text-slate-500 line-clamp-2 max-w-md">{item.description}</p>
-                          <p className="text-sm font-semibold text-orange-500">₹{parseFloat(item.price_per_unit).toFixed(2)} each</p>
+                        <div className="flex-grow min-w-0 text-center sm:text-left space-y-1.5">
+                          <h3 className="text-base font-bold text-ink line-clamp-1">{item.name}</h3>
+                          <p className="text-xs text-ink-muted line-clamp-2 max-w-md">{item.description}</p>
+                          <div className="flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
+                            <span className="text-sm font-bold text-brand">₹{parseFloat(item.price_per_unit).toFixed(2)}</span>
+                            <span className="text-xs text-ink-muted">per unit</span>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                          {/* Quantity Selector */}
-                          <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-slate-50 p-1">
+
+                        <div className="flex items-center justify-between gap-5 w-full sm:w-auto pt-3 sm:pt-0 mt-1 sm:mt-0 border-t sm:border-t-0 border-border sm:flex-col sm:items-end">
+                          <div className="flex items-center border border-border rounded-xl overflow-hidden bg-muted-bg p-1">
                             <button
                               onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
-                              className="px-2.5 py-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              className="px-2.5 py-1.5 hover:bg-surface rounded-lg text-ink transition-colors cursor-pointer"
+                              aria-label="Decrease quantity"
                             >
                               <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
                             </button>
-                            <span className="px-3 py-1.5 text-sm font-black text-slate-800 min-w-[2.25rem] text-center">{item.quantity}</span>
+                            <span className="px-3 py-1.5 text-sm font-black text-ink min-w-[2.25rem] text-center">{item.quantity}</span>
                             <button
                               onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
-                              className="px-2.5 py-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              className="px-2.5 py-1.5 hover:bg-surface rounded-lg text-ink transition-colors cursor-pointer"
+                              aria-label="Increase quantity"
                             >
                               <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                             </button>
                           </div>
-                          <div className="text-right min-w-[80px]">
-                            <span className="text-base font-black text-slate-900">₹{parseFloat(item.total_price).toFixed(2)}</span>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-extrabold text-ink">₹{parseFloat(item.total_price).toFixed(2)}</span>
+                            <button
+                              className="text-ink-muted hover:text-danger hover:bg-red-50 p-2 rounded-xl transition-all cursor-pointer"
+                              onClick={() => handleRemoveItem(item.product_id)}
+                              title="Remove item"
+                              aria-label="Remove item"
+                            >
+                              <Trash2 className="h-4 w-4" strokeWidth={2} />
+                            </button>
                           </div>
-                          <button
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-xl transition-all border border-transparent hover:border-red-100 cursor-pointer"
-                            onClick={() => handleRemoveItem(item.product_id)}
-                            title="Remove item"
-                          >
-                            <Trash2 className="h-4 w-4" strokeWidth={2} />
-                          </button>
                         </div>
                       </motion.div>
                     ))}
@@ -279,14 +303,14 @@ const CartPage = () => {
 
             {/* Delivery Address Selector */}
             {cartItems.length > 0 && (
-              <Card className="bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden">
-                <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <Card className="bg-surface border border-border shadow-sm rounded-2xl overflow-hidden">
+                <CardHeader className="border-b border-border flex flex-row items-center justify-between bg-muted-bg/50">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-brand-light">
                       <MapPin className="h-5 w-5 text-brand" strokeWidth={2} />
                     </div>
                     <div>
-                      <CardTitle className="text-lg font-bold text-slate-800">Delivery Address</CardTitle>
+                      <CardTitle className="text-lg font-bold text-ink">Delivery Address</CardTitle>
                       <CardDescription>Where should we ship your order?</CardDescription>
                     </div>
                   </div>
@@ -296,21 +320,21 @@ const CartPage = () => {
                 </CardHeader>
                 <CardContent className="p-6">
                   {addresses.length === 0 ? (
-                    <div className="text-center py-6 border border-dashed border-gray-300 rounded-lg bg-slate-50 text-sm">
-                      <p className="text-slate-600 mb-2 font-medium">No saved addresses found</p>
+                    <div className="text-center py-6 border border-dashed border-border rounded-lg bg-muted-bg text-sm">
+                      <p className="text-ink-muted mb-2 font-medium">No saved addresses found</p>
                       <Button onClick={() => navigate("/addresses")} size="sm" className="font-bold text-xs">
                         Add Shipping Address
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                    <div className="space-y-3 max-h-60 overflow-y-auto overscroll-contain pr-1">
                       {addresses.map((addr) => (
-                        <label 
-                          key={addr.id} 
+                        <label
+                          key={addr.id}
                           className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer select-none transition-all ${
                             selectedAddressId === addr.id
                               ? 'border-brand bg-brand-light/50 shadow-sm'
-                              : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                              : 'border-border hover:bg-muted-bg hover:border-ink-muted/30'
                           }`}
                         >
                           <input
@@ -322,15 +346,15 @@ const CartPage = () => {
                           />
                           <div className="text-left space-y-0.5 text-sm">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-800">{addr.fullName}</span>
+                              <span className="font-bold text-ink">{addr.fullName}</span>
                               {addr.default && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-brand-light text-brand">
                                   Default
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-600">{addr.streetAddress}, {addr.city}, {addr.state} - {addr.zipCode}</p>
-                            <p className="text-[10px] text-slate-400">Phone: {addr.phoneNumber}</p>
+                            <p className="text-xs text-ink-muted">{addr.streetAddress}, {addr.city}, {addr.state} - {addr.zipCode}</p>
+                            <p className="text-[10px] text-ink-muted/70">Phone: {addr.phoneNumber}</p>
                           </div>
                         </label>
                       ))}
@@ -344,26 +368,37 @@ const CartPage = () => {
           {/* Checkout Card */}
           {cartItems.length > 0 && (
             <div className="w-full lg:w-1/3">
-              <Card className="bg-white border border-gray-100 shadow-sm rounded-xl sticky top-28 overflow-hidden">
-                <CardHeader className="border-b border-gray-100 bg-slate-50/50">
-                  <CardTitle className="text-lg font-bold text-slate-800">Order Summary</CardTitle>
+              <Card className="bg-surface border border-border shadow-sm rounded-2xl sticky top-28 overflow-hidden">
+                <CardHeader className="border-b border-border bg-muted-bg/50">
+                  <CardTitle className="text-lg font-bold text-ink">Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <div className="flex justify-between items-center text-sm text-slate-600">
+                  <div className="flex justify-between items-center text-sm text-ink-muted">
                     <span>Subtotal</span>
-                    <span className="font-semibold text-slate-800">₹{subtotal}</span>
+                    <span className="font-semibold text-ink">₹{subtotal}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-slate-600">
-                    <span>Shipping</span>
-                    <span className="font-semibold text-slate-800">₹{shipping}</span>
+                  <div className="flex justify-between items-center text-sm text-ink-muted">
+                    <span className="flex items-center gap-1.5">
+                      <Truck className="h-3.5 w-3.5" strokeWidth={2} />
+                      Shipping
+                    </span>
+                    <span className="font-semibold text-ink">
+                      {shipping === "0.00" ? <span className="text-success">FREE</span> : `₹${shipping}`}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-slate-600">
+                  <div className="flex justify-between items-center text-sm text-ink-muted">
                     <span>Total Products</span>
-                    <span className="font-semibold text-slate-800">{totalProducts()}</span>
+                    <span className="font-semibold text-ink">{totalProducts()}</span>
                   </div>
-                  <div className="border-t border-gray-200 pt-4 flex justify-between items-center">
-                    <span className="text-base font-bold text-slate-800">Grand Total</span>
-                    <span className="text-2xl font-extrabold text-slate-900">
+                  {shipping !== "0.00" && (
+                    <div className="flex items-start gap-2 bg-brand-light/60 text-brand text-xs font-medium rounded-lg p-2.5">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" strokeWidth={2} />
+                      <span>Add ₹{(499 - parseFloat(subtotal)).toFixed(2)} more to unlock free delivery</span>
+                    </div>
+                  )}
+                  <div className="border-t border-border pt-4 flex justify-between items-center">
+                    <span className="text-base font-bold text-ink">Grand Total</span>
+                    <span className="text-2xl font-extrabold text-ink">
                       ₹{(parseFloat(subtotal) + parseFloat(shipping)).toFixed(2)}
                     </span>
                   </div>

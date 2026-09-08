@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, User, ShoppingCart } from 'lucide-react';
 import { getProductSuggestions } from '@/api/products';
 import { getAddresses } from '@/api/addresses';
@@ -18,7 +19,18 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
   const abortControllerRef = useRef(null);
   const lastSearchTermRef = useRef("");
   const [pincode, setPincode] = useState("423651");
+  const [cartBump, setCartBump] = useState(false);
   const toast = useToast();
+
+  // Bump the cart icon whenever an item is successfully added to cart, anywhere on the page
+  useEffect(() => {
+    const onBump = () => {
+      setCartBump(true);
+      window.setTimeout(() => setCartBump(false), 500);
+    };
+    window.addEventListener('cart:bump', onBump);
+    return () => window.removeEventListener('cart:bump', onBump);
+  }, []);
 
   // Authentication-aware address loading: only fetch for authenticated users
   useEffect(() => {
@@ -130,7 +142,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
   };
 
   const suggestionList = showSuggestions && suggestions.length > 0 && (
-    <ul className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-surface border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
+    <ul className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-surface border border-border rounded-xl shadow-lg overflow-x-hidden max-h-80 overflow-y-auto overscroll-contain">
       {suggestions.map((item) => (
         <li key={item.product_id}>
           <button
@@ -225,14 +237,27 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
               onClick={handleCartClick}
               className="flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl hover:bg-brand-light transition-colors cursor-pointer relative min-w-[52px]"
             >
-              <div className="relative">
+              <motion.div
+                className="relative"
+                animate={cartBump ? { scale: [1, 1.3, 0.95, 1] } : {}}
+                transition={{ duration: 0.45, ease: 'easeInOut' }}
+              >
                 <ShoppingCart className="h-5 w-5 text-ink-muted" strokeWidth={2} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2.5 h-4 min-w-4 px-0.5 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </div>
+                <AnimatePresence>
+                  {cartCount > 0 && (
+                    <motion.span
+                      key={cartCount}
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.5, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                      className="absolute -top-2 -right-2.5 h-4 min-w-4 px-0.5 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.div>
               <span className="text-[10px] font-semibold text-ink">Cart</span>
             </button>
           </div>
