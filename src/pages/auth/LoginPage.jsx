@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Lock, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { User, Lock, AlertCircle, Loader2 } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -23,7 +23,7 @@ const formItem = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };
 
-// 'idle' -> 'loading' (request in flight) -> 'success' (brief confirmation) -> navigate away.
+// 'idle' -> 'loading' (request in flight) -> navigate away as soon as it resolves.
 // Any request path (password or Google) can only start from 'idle', which is what
 // guards against duplicate submissions from either path while one is already running.
 export default function LoginPage() {
@@ -45,9 +45,7 @@ export default function LoginPage() {
   }, []);
 
   const succeed = useCallback((role) => {
-    setError(null);
-    setStatus("success");
-    window.setTimeout(() => redirectAfterAuth(navigate, role), 280);
+    redirectAfterAuth(navigate, role);
   }, [navigate]);
 
   const handleSignIn = async (e) => {
@@ -118,22 +116,8 @@ export default function LoginPage() {
                     transition={{ duration: 0.15 }}
                     className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-sm rounded-b-2xl"
                   >
-                    {status === "success" ? (
-                      <motion.div
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                        className="flex flex-col items-center gap-3"
-                      >
-                        <CheckCircle2 className="h-9 w-9 text-success" strokeWidth={2} />
-                        <p className="text-sm font-semibold text-ink">Welcome back! Redirecting…</p>
-                      </motion.div>
-                    ) : (
-                      <>
-                        <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
-                        <p className="text-sm font-semibold text-ink">Signing you in…</p>
-                      </>
-                    )}
+                    <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
+                    <p className="text-sm font-semibold text-ink">Signing you in…</p>
                   </motion.div>
                 )}
               </AnimatePresence>

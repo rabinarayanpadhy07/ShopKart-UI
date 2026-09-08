@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Lock, AlertCircle, Shield, Loader2, CheckCircle2 } from "lucide-react";
+import { User, Lock, AlertCircle, Shield, Loader2 } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -32,8 +32,7 @@ export default function AdminLoginPage() {
     try {
       const data = await login(username, password);
       if (data.role === "ADMIN") {
-        setStatus("success");
-        window.setTimeout(() => navigate("/admindashboard"), 280);
+        navigate("/admindashboard");
       } else {
         setStatus("idle");
         setError("Access denied. Admin role required.");
@@ -52,8 +51,7 @@ export default function AdminLoginPage() {
 
   const handleGoogleSuccess = useCallback((data) => {
     if (data.role === "ADMIN") {
-      setStatus("success");
-      window.setTimeout(() => navigate("/admindashboard"), 280);
+      navigate("/admindashboard");
     } else {
       setStatus("idle");
       setError("Access denied. Admin role required.");
@@ -91,22 +89,8 @@ export default function AdminLoginPage() {
                   transition={{ duration: 0.15 }}
                   className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-sm rounded-b-2xl"
                 >
-                  {status === "success" ? (
-                    <motion.div
-                      initial={{ scale: 0.6, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                      className="flex flex-col items-center gap-3"
-                    >
-                      <CheckCircle2 className="h-9 w-9 text-success" strokeWidth={2} />
-                      <p className="text-sm font-semibold text-ink">Welcome back, Admin. Redirecting…</p>
-                    </motion.div>
-                  ) : (
-                    <>
-                      <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
-                      <p className="text-sm font-semibold text-ink">Signing you in…</p>
-                    </>
-                  )}
+                  <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
+                  <p className="text-sm font-semibold text-ink">Signing you in…</p>
                 </motion.div>
               )}
             </AnimatePresence>
