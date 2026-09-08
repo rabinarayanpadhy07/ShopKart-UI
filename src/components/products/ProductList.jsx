@@ -1,10 +1,20 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Heart, Star, ShoppingBag, PackageOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Star, ShoppingBag, PackageOpen, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IMAGE_FALLBACK } from '@/lib/placeholder';
 
 export const ProductList = React.memo(function ProductList({ products, onAddToCart, onAddToWishlist }) {
+  const [justAdded, setJustAdded] = useState(null);
+
+  const handleAddToCart = async (productId) => {
+    const success = await onAddToCart(productId);
+    if (success === false) return;
+    setJustAdded(productId);
+    window.dispatchEvent(new CustomEvent('cart:bump'));
+    window.setTimeout(() => setJustAdded((current) => (current === productId ? null : current)), 1400);
+  };
+
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -82,7 +92,7 @@ export const ProductList = React.memo(function ProductList({ products, onAddToCa
 
               {/* Description */}
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                {product.description || 'Lightweight, breathable and built for performance.'}
+                {product.description || 'Quality you can trust, backed by our 7-day easy returns.'}
               </p>
 
               {/* Rating and Reviews */}
@@ -109,12 +119,47 @@ export const ProductList = React.memo(function ProductList({ products, onAddToCa
                 </div>
 
                 <Button
-                  onClick={() => onAddToCart(product.product_id)}
+                  onClick={() => handleAddToCart(product.product_id)}
                   disabled={product.stock <= 0}
-                  className="w-full gap-2 rounded-xl text-sm font-semibold py-2.5 px-4 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center h-11 bg-brand text-white hover:bg-brand-hover"
+                  className={`w-full gap-2 rounded-xl text-sm font-semibold py-2.5 px-4 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center h-11 overflow-hidden ${
+                    justAdded === product.product_id
+                      ? 'bg-success text-white'
+                      : 'bg-brand text-white hover:bg-brand-hover'
+                  }`}
                 >
-                  <ShoppingBag className="h-4 w-4" strokeWidth={2.2} />
-                  {product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                  <AnimatePresence mode="wait" initial={false}>
+                    {justAdded === product.product_id ? (
+                      <motion.span
+                        key="added"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.18 }}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <motion.span
+                          initial={{ scale: 0.5, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                        >
+                          <Check className="h-4 w-4" strokeWidth={2.5} />
+                        </motion.span>
+                        Added to Cart
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="default"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.18 }}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <ShoppingBag className="h-4 w-4" strokeWidth={2.2} />
+                        {product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </Button>
               </div>
             </div>

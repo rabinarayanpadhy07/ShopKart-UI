@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PackageCheck, CalendarDays, Hash } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useCartCount } from '@/hooks/useCartCount';
@@ -8,6 +9,13 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from '@/components/ui/Toast';
 import { IMAGE_FALLBACK } from '@/lib/placeholder';
 import { getOrders, cancelOrder, returnOrder, submitReview } from '@/api/orders';
+
+function formatOrderDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 const STATUS_STYLES = {
   CANCELLED: 'bg-red-50 text-red-700 border-red-200',
@@ -137,7 +145,15 @@ export default function OrdersPage() {
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="flex-grow max-w-4xl mx-auto w-full py-10 px-4"
       >
-        <h1 className="text-3xl font-extrabold text-ink mb-6">Your Orders</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 rounded-xl bg-brand-light hidden sm:flex">
+            <PackageCheck className="h-6 w-6 text-brand" strokeWidth={2} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-ink">Your Orders</h1>
+            <p className="text-sm text-ink-muted mt-0.5">Track, cancel or return your recent purchases</p>
+          </div>
+        </div>
         {loading && (
           <div className="text-center py-10 text-ink-muted">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand mb-2"></div>
@@ -176,10 +192,19 @@ export default function OrdersPage() {
                     <Card className="overflow-hidden bg-surface hover:shadow-md transition-shadow">
                       <CardHeader className="bg-muted-bg/70 border-b border-border p-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-ink-muted">
-                            Order ID: <span className="font-mono text-ink">{order.order_id}</span>
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] || DEFAULT_STATUS_STYLE}`}>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm font-semibold text-ink-muted">
+                            <span className="flex items-center gap-1.5">
+                              <Hash className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                              <span className="font-mono text-ink">{order.order_id}</span>
+                            </span>
+                            {formatOrderDate(order.created_at) && (
+                              <span className="flex items-center gap-1.5">
+                                <CalendarDays className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                                Placed on {formatOrderDate(order.created_at)}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] || DEFAULT_STATUS_STYLE}`}>
                             {order.status}
                           </span>
                         </div>

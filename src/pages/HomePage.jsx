@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Truck, ShieldCheck, RotateCcw, Zap, AlertCircle } from 'lucide-react';
 import { CategoryNavigation } from '@/components/layout/CategoryNavigation';
 import { ProductList } from '@/components/products/ProductList';
@@ -146,14 +147,16 @@ export default function CustomerHomePage() {
     if (!isAuth) {
       toast.info('Please sign in to add items to cart');
       navigate('/login');
-      return;
+      return false;
     }
     try {
       await addToCart(productId);
       toast.success('Added to cart.');
+      return true;
     } catch (e) {
       console.error('Error adding to cart:', e);
       toast.error(e.message || 'Failed to add to cart');
+      return false;
     }
   };
 
@@ -185,56 +188,74 @@ export default function CustomerHomePage() {
       mainClassName="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 pt-10 pb-6 md:pt-14 md:pb-8 space-y-10"
     >
       {/* Hero Banner with optimized image priority */}
-      <section className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${slide.accent} border border-border`}>
-        <div className="grid md:grid-cols-2 items-center min-h-[220px] md:min-h-[300px]">
-          <div className="p-6 md:p-10 space-y-4 z-10">
-            <span className="inline-block text-xs font-semibold text-brand bg-brand-light px-3 py-1 rounded-full">
-              {slide.tag}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-ink leading-tight tracking-tight">
-              {slide.title}
-            </h1>
-            <p className="text-sm md:text-base text-ink-muted max-w-sm leading-relaxed">{slide.subtitle}</p>
-            <Button
-              onClick={() => { setSelectedCategory(slide.category); setCurrentPage(0); }}
-              className="rounded-xl px-6"
+      <section className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${slide.accent} border border-border shadow-sm`}>
+        <div className="grid md:grid-cols-2 items-center min-h-[240px] md:min-h-[320px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`text-${activeSlide}`}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 16 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              className="p-6 md:p-10 space-y-4 z-10"
             >
-              {slide.cta}
-            </Button>
-            <div className="flex gap-2 pt-2">
-              {HERO_SLIDES.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveSlide(i)}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${i === activeSlide ? 'w-8 bg-brand' : 'w-1.5 bg-border hover:bg-brand-muted'}`}
-                  aria-label={`Slide ${i + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="relative hidden md:flex items-center justify-center p-8">
-            <img
-              src={slide.image}
-              alt=""
-              className="max-h-56 object-contain drop-shadow-xl rounded-2xl"
-              loading={activeSlide === 0 ? "eager" : "lazy"}
-              fetchPriority={activeSlide === 0 ? "high" : "auto"}
-              decoding="async"
-              width="400"
-              height="224"
-            />
+              <span className="inline-block text-xs font-semibold text-brand bg-white/70 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+                {slide.tag}
+              </span>
+              <h1 className="text-3xl md:text-5xl font-extrabold text-ink leading-tight tracking-tight">
+                {slide.title}
+              </h1>
+              <p className="text-sm md:text-base text-ink-muted max-w-sm leading-relaxed">{slide.subtitle}</p>
+              <Button
+                onClick={() => { setSelectedCategory(slide.category); setCurrentPage(0); }}
+                className="rounded-xl px-6 gap-2 group"
+              >
+                {slide.cta}
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+              </Button>
+              <div className="flex gap-2 pt-2">
+                {HERO_SLIDES.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveSlide(i)}
+                    className={`h-1.5 rounded-full transition-all cursor-pointer ${i === activeSlide ? 'w-8 bg-brand' : 'w-1.5 bg-ink/15 hover:bg-brand-muted'}`}
+                    aria-label={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+          <div className="relative hidden md:flex items-center justify-center p-8 overflow-hidden">
+            <div className="absolute h-56 w-56 rounded-full bg-white/40 blur-2xl" aria-hidden="true" />
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={`img-${activeSlide}`}
+                src={slide.image}
+                alt=""
+                initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className="relative max-h-60 object-contain drop-shadow-2xl rounded-2xl"
+                loading={activeSlide === 0 ? "eager" : "lazy"}
+                fetchPriority={activeSlide === 0 ? "high" : "auto"}
+                decoding="async"
+                width="400"
+                height="224"
+              />
+            </AnimatePresence>
           </div>
         </div>
         <button
           onClick={() => setActiveSlide(p => (p - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
-          className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface cursor-pointer shadow-sm"
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface hover:scale-105 cursor-pointer shadow-sm transition-all"
           aria-label="Previous Slide"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
         </button>
         <button
           onClick={() => setActiveSlide(p => (p + 1) % HERO_SLIDES.length)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface cursor-pointer shadow-sm"
+          className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface hover:scale-105 cursor-pointer shadow-sm transition-all"
           aria-label="Next Slide"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
@@ -244,7 +265,10 @@ export default function CustomerHomePage() {
       {/* Trust Badges */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {TRUST_BADGES.map(({ Icon, label, sub }) => (
-          <div key={label} className="flex items-center gap-3 bg-surface rounded-xl border border-border p-4">
+          <div
+            key={label}
+            className="flex items-center gap-3 bg-surface rounded-xl border border-border p-4 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-brand-muted/50"
+          >
             <div className="h-10 w-10 rounded-xl bg-brand-light flex items-center justify-center shrink-0">
               <Icon className="h-5 w-5 text-brand" strokeWidth={2} />
             </div>

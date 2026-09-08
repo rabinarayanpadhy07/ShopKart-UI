@@ -89,7 +89,21 @@ export default function LoginPage() {
               </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="relative">
+              <AnimatePresence>
+                {loading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/80 backdrop-blur-sm rounded-b-2xl"
+                  >
+                    <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
+                    <p className="text-sm font-semibold text-ink">Signing you in…</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <AnimatePresence>
                 {error && (
                   <motion.div
