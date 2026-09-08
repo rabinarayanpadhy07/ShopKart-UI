@@ -163,7 +163,7 @@ export default function AdminDashboard() {
       <div className="md:hidden flex items-center justify-between bg-slate-900 text-white p-4 shadow-md sticky top-0 z-50 w-full">
         <Logo size="default" variant="light" />
         <div className="flex items-center space-x-3">
-          <span className="text-xs font-semibold text-[#00ABE4]">Admin Dashboard</span>
+          <span className="text-xs font-semibold text-brand-muted">Admin Dashboard</span>
           <button
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             className="p-2 hover:bg-slate-800 rounded-lg cursor-pointer"
@@ -213,11 +213,11 @@ export default function AdminDashboard() {
                     setIsMobileSidebarOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-semibold transition-all cursor-pointer group
-                    ${isActive ? "bg-slate-800 text-[#00ABE4] shadow-sm" : "text-slate-400 hover:text-white hover:bg-slate-850"}
+                    ${isActive ? "bg-slate-800 text-brand shadow-sm" : "text-slate-400 hover:text-white hover:bg-slate-850"}
                   `}
                 >
                   <Icon
-                    className={`h-5 w-5 shrink-0 ${isActive ? "text-[#00ABE4]" : "text-slate-400 group-hover:text-white"}`}
+                    className={`h-5 w-5 shrink-0 ${isActive ? "text-brand" : "text-slate-400 group-hover:text-white"}`}
                   />
                   {(!isSidebarCollapsed || isMobileSidebarOpen) && (
                     <span className="flex-grow text-left">{item.label}</span>
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
         {/* User Card at bottom of sidebar */}
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-2xl">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-[#00ABE4] font-black font-mono">
+            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-brand font-black font-mono">
               AD
             </div>
             {(!isSidebarCollapsed || isMobileSidebarOpen) && (
@@ -277,9 +277,11 @@ export default function AdminDashboard() {
             <p className="text-xs text-slate-400 mt-0.5">Control panel, metrics and actions for active site administration.</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Server Online
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="w-6 h-6 rounded-full bg-brand-light text-brand flex items-center justify-center font-black text-[10px]">
+                AD
+              </span>
+              Administrator
             </span>
           </div>
         </header>

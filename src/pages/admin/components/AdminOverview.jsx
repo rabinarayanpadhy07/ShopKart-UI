@@ -138,7 +138,7 @@ export function AdminOverview({
         <Card className="lg:col-span-2 border-slate-205 bg-white flex flex-col justify-between text-left shadow-xs">
           <CardHeader className="border-b border-slate-100 p-4">
             <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4 text-[#00ABE4]" /> Recent Incoming Orders
+              <ShoppingBag className="h-4 w-4 text-brand" /> Recent Incoming Orders
             </CardTitle>
             <CardDescription className="text-[11px]">Audit trail of the 5 most recent checkout orders.</CardDescription>
           </CardHeader>

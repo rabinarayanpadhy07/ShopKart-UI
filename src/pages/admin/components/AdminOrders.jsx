@@ -2,6 +2,8 @@ import React, { useState, useMemo } from "react";
 import { Search, AlertTriangle, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
 import { updateOrderStatus, getOrderHistory } from "@/api/admin";
 
 export function AdminOrders({
@@ -17,6 +19,9 @@ export function AdminOrders({
   const [transitionComments, setTransitionComments] = useState("");
   const [orderHistory, setOrderHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // { status, comments, label } | null
+  const [applyingAction, setApplyingAction] = useState(false);
+  const toast = useToast();
 
   // Filter orders client-side by ID or User ID or Status
   const filteredOrders = useMemo(() => {
@@ -46,34 +51,49 @@ export function AdminOrders({
     }
   };
 
-  const handleStatusTransition = async (e) => {
+  const handleStatusTransitionSubmit = (e) => {
     e.preventDefault();
     if (!transitionStatus || !selectedOrder) return;
+    if (transitionStatus === selectedOrder.status) {
+      toast.info("Order is already in that status.");
+      return;
+    }
+    setPendingAction({
+      status: transitionStatus,
+      comments: transitionComments,
+      label: `Move this order to ${transitionStatus}?`,
+      successMessage: "Order status updated successfully.",
+    });
+  };
 
+  const handleReturnDecision = (status, comments) => {
+    if (!selectedOrder) return;
+    setPendingAction({
+      status,
+      comments,
+      label: status === "RETURN_APPROVED"
+        ? "Accept this return request? Stock will be restored once processed."
+        : "Reject this return request? The customer will be notified.",
+      successMessage: `Return request ${status === "RETURN_APPROVED" ? "accepted" : "rejected"}.`,
+    });
+  };
+
+  const confirmPendingAction = async () => {
+    if (!pendingAction || !selectedOrder) return;
+    setApplyingAction(true);
     try {
-      const updated = await updateOrderStatus(selectedOrder.orderId, transitionStatus, transitionComments);
+      const updated = await updateOrderStatus(selectedOrder.orderId, pendingAction.status, pendingAction.comments);
       setSelectedOrder(updated);
       setTransitionComments("");
       const historyData = await getOrderHistory(updated.orderId);
       setOrderHistory(historyData || []);
       if (onOrderUpdated) onOrderUpdated();
-      alert("Order status updated successfully!");
+      toast.success(pendingAction.successMessage);
+      setPendingAction(null);
     } catch (err) {
-      alert(err.message || "Invalid status transition");
-    }
-  };
-
-  const handleReturnDecision = async (status, comments) => {
-    if (!selectedOrder) return;
-    try {
-      const updated = await updateOrderStatus(selectedOrder.orderId, status, comments);
-      setSelectedOrder(updated);
-      const historyData = await getOrderHistory(updated.orderId);
-      setOrderHistory(historyData || []);
-      if (onOrderUpdated) onOrderUpdated();
-      alert(`Return request ${status === "RETURN_APPROVED" ? "accepted" : "rejected"}!`);
-    } catch (err) {
-      alert(err.message || "Failed to process return decision");
+      toast.error(err.message || "Failed to update order status");
+    } finally {
+      setApplyingAction(false);
     }
   };
 
@@ -125,7 +145,7 @@ export function AdminOrders({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00ABE4]"
+            className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
           >
             <option value="">All Statuses</option>
             <option value="PENDING">PENDING</option>
@@ -220,7 +240,7 @@ export function AdminOrders({
             <div className="flex items-center justify-between p-6 border-b border-slate-150 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-[#00ABE4]" />
+                  <FileText className="h-5 w-5 text-brand" />
                   Order #{selectedOrder.orderId}
                 </h3>
                 <p className="text-xs text-slate-400">Placed on {new Date(selectedOrder.createdAt).toLocaleString()}</p>
@@ -274,22 +294,14 @@ export function AdminOrders({
                       <div className="flex gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to ACCEPT this return request?")) {
-                              handleReturnDecision("RETURN_APPROVED", "Return request accepted by administrator.");
-                            }
-                          }}
+                          onClick={() => handleReturnDecision("RETURN_APPROVED", "Return request accepted by administrator.")}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded-lg text-[10px] cursor-pointer"
                         >
                           Accept Return
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to REJECT this return request?")) {
-                              handleReturnDecision("RETURN_REJECTED", "Return request rejected by administrator.");
-                            }
-                          }}
+                          onClick={() => handleReturnDecision("RETURN_REJECTED", "Return request rejected by administrator.")}
                           className="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg text-[10px] cursor-pointer"
                         >
                           Reject Return
@@ -298,13 +310,13 @@ export function AdminOrders({
                     </div>
                   )}
 
-                  <form onSubmit={handleStatusTransition} className="space-y-3">
+                  <form onSubmit={handleStatusTransitionSubmit} className="space-y-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Update Workflow Status</label>
                       <select
                         value={transitionStatus}
                         onChange={(e) => setTransitionStatus(e.target.value)}
-                        className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00ABE4]"
+                        className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                       >
                         <option value="PENDING">PENDING</option>
                         <option value="CONFIRMED">CONFIRMED</option>
@@ -365,6 +377,16 @@ export function AdminOrders({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(pendingAction)}
+        title="Confirm status change"
+        description={pendingAction?.label}
+        confirmLabel="Confirm"
+        loading={applyingAction}
+        onConfirm={confirmPendingAction}
+        onCancel={() => !applyingAction && setPendingAction(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 import { modifyUser } from "@/api/admin";
 
 export function AdminUsers({
@@ -9,6 +10,7 @@ export function AdminUsers({
   usersLoading = false,
   onUserMutated,
 }) {
+  const toast = useToast();
   const [searchUserQuery, setSearchUserQuery] = useState("");
   const [editingUser, setEditingUser] = useState(null);
   const [inspectingUser, setInspectingUser] = useState(null);
@@ -41,11 +43,11 @@ export function AdminUsers({
     setSubmitting(true);
     try {
       await modifyUser(editingUser.userId, formValues);
-      alert("User updated successfully!");
+      toast.success("User updated successfully.");
       setEditingUser(null);
       if (onUserMutated) onUserMutated();
     } catch (err) {
-      alert(err.message || "Failed to update user");
+      toast.error(err.message || "Failed to update user");
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +158,7 @@ export function AdminUsers({
               <p><span className="font-semibold text-slate-400">User ID:</span> #{inspectingUser.userId}</p>
               <p><span className="font-semibold text-slate-400">Username:</span> <strong className="text-slate-800">{inspectingUser.username}</strong></p>
               <p><span className="font-semibold text-slate-400">Email:</span> {inspectingUser.email}</p>
-              <p><span className="font-semibold text-slate-400">Role:</span> <span className="font-bold text-[#00ABE4]">{inspectingUser.role}</span></p>
+              <p><span className="font-semibold text-slate-400">Role:</span> <span className="font-bold text-brand">{inspectingUser.role}</span></p>
               <p><span className="font-semibold text-slate-400">Registered:</span> {new Date(inspectingUser.createdAt).toLocaleString()}</p>
             </div>
             <Button
@@ -215,7 +217,7 @@ export function AdminUsers({
                 <select
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
-                  className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00ABE4]"
+                  className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   <option value="CUSTOMER">CUSTOMER</option>
                   <option value="ADMIN">ADMIN</option>

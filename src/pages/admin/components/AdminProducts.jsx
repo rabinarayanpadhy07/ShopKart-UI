@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
+import { IMAGE_FALLBACK } from "@/lib/placeholder";
 import { getProducts } from "@/api/products";
 import { addAdminProduct, modifyAdminProduct, deleteAdminProduct } from "@/api/admin";
 
@@ -9,6 +12,9 @@ export function AdminProducts({
   categoriesList = [],
   onProductMutated,
 }) {
+  const toast = useToast();
+  const [deleteTarget, setDeleteTarget] = useState(null); // product being confirmed for deletion
+  const [deleting, setDeleting] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,34 +108,36 @@ export function AdminProducts({
 
       if (modalMode === "add") {
         await addAdminProduct(payload);
-        alert("Product added successfully!");
+        toast.success("Product added successfully.");
       } else {
         await modifyAdminProduct(productForm.productId, payload);
-        alert("Product updated successfully!");
+        toast.success("Product updated successfully.");
       }
 
       setIsModalOpen(false);
       fetchProductsPage();
       if (onProductMutated) onProductMutated();
     } catch (err) {
-      alert(err.message || "Operation failed");
+      toast.error(err.message || "Operation failed");
     } finally {
       setFormSubmitting(false);
     }
   };
 
   // Delete product
-  const handleDelete = async (productId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this product?")) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteAdminProduct(productId);
-      alert("Product deleted successfully!");
+      await deleteAdminProduct(deleteTarget.product_id);
+      toast.success("Product deleted successfully.");
+      setDeleteTarget(null);
       fetchProductsPage();
       if (onProductMutated) onProductMutated();
     } catch (err) {
-      alert(err.message || "Failed to delete product");
+      toast.error(err.message || "Failed to delete product");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -219,12 +227,12 @@ export function AdminProducts({
                     <tr key={p.product_id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-4">
                         <img
-                          src={firstImage || "https://via.placeholder.com/48?text=No+Image"}
+                          src={firstImage || IMAGE_FALLBACK}
                           alt={p.name}
                           className="h-10 w-10 rounded-lg object-cover bg-slate-50 border border-slate-150"
                           loading="lazy"
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/48?text=No+Image";
+                            e.target.src = IMAGE_FALLBACK;
                           }}
                         />
                       </td>
@@ -255,7 +263,7 @@ export function AdminProducts({
                           Edit
                         </Button>
                         <Button
-                          onClick={() => handleDelete(p.product_id)}
+                          onClick={() => setDeleteTarget(p)}
                           variant="destructive"
                           size="sm"
                           className="text-[10px] font-bold h-8 cursor-pointer"
@@ -338,7 +346,7 @@ export function AdminProducts({
                   placeholder="Detailed product features and specifications..."
                   value={productForm.description}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                  className="w-full rounded-xl border border-slate-350 bg-white p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00ABE4]"
+                  className="w-full rounded-xl border border-slate-350 bg-white p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
               </div>
 
@@ -377,7 +385,7 @@ export function AdminProducts({
                   required
                   value={productForm.categoryId}
                   onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })}
-                  className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00ABE4]"
+                  className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   <option value="">Select Category</option>
                   {categoriesList.map((cat) => (
@@ -420,6 +428,16 @@ export function AdminProducts({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete this product?"
+        description={deleteTarget ? `"${deleteTarget.name}" will be permanently removed from the catalog. This cannot be undone.` : ''}
+        confirmLabel="Delete Product"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </div>
   );
 }
