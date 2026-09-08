@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, UserPlus, AlertCircle } from 'lucide-react';
 import Logo from '@/components/layout/Logo';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
@@ -95,7 +95,7 @@ export default function RegistrationPage() {
           <CardFooter className="text-center text-sm border-t border-border pt-5">
             <p className="text-ink-muted">
               Already have an account?{' '}
-              <a href="/login" className="text-brand hover:text-brand-hover font-semibold transition-colors">Sign in</a>
+              <Link to="/login" className="text-brand hover:text-brand-hover font-semibold transition-colors">Sign in</Link>
             </p>
           </CardFooter>
         </Card>

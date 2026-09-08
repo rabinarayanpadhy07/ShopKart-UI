@@ -4,6 +4,10 @@ import { Trash2, Minus, Plus, ShoppingBag, MapPin } from "lucide-react";
 import { StoreLayout } from "@/components/layout/StoreLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { getCartItems, removeCartItem, updateCartItem } from "@/api/cart";
+import { getAddresses } from "@/api/addresses";
+import { request } from "@/api/client";
+import { apiCache } from "@/api/cache";
 
 const loadRazorpay = () => {
   if (window.Razorpay) return Promise.resolve();
@@ -36,12 +40,7 @@ const CartPage = () => {
 
   const fetchCartItems = async () => {
     try {
-      const response = await fetch("/api/cart/items", {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to fetch cart items");
-      const data = await response.json();
-
+      const data = await getCartItems();
       setCartItems(
         data?.cart?.products.map((item) => ({
           ...item,
@@ -59,17 +58,11 @@ const CartPage = () => {
 
   const fetchAddresses = async () => {
     try {
-      const response = await fetch("/api/addresses", {
-        credentials: "include"
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAddresses(data || []);
-        if (data.length > 0) {
-          // Select default or first address
-          const defaultAddr = data.find(a => a.default) || data[0];
-          setSelectedAddressId(defaultAddr.id);
-        }
+      const data = await getAddresses();
+      setAddresses(data || []);
+      if (data && data.length > 0) {
+        const defaultAddr = data.find((a) => a.isDefault || a.default) || data[0];
+        setSelectedAddressId(defaultAddr.id || defaultAddr.addressId);
       }
     } catch (err) {
       console.error("Error loading addresses", err);
@@ -84,13 +77,8 @@ const CartPage = () => {
   // Remove item from the cart
   const handleRemoveItem = async (productId) => {
     try {
-      const response = await fetch(`/api/cart/delete?productId=${productId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (response.status === 204) {
-        setCartItems((prevItems) => prevItems.filter((item) => item.product_id !== productId));
-      } else throw new Error("Failed to remove item");
+      await removeCartItem(productId);
+      setCartItems((prevItems) => prevItems.filter((item) => item.product_id !== productId));
     } catch (error) {
       console.error("Error removing item:", error);
     }
@@ -103,25 +91,18 @@ const CartPage = () => {
         handleRemoveItem(productId);
         return;
       }
-      const response = await fetch("/api/cart/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ productId, quantity: newQuantity }),
-      });
-      if (response.ok) {
-        setCartItems((prevItems) =>
-          prevItems.map((item) =>
-            item.product_id === productId
-              ? {
-                  ...item,
-                  quantity: newQuantity,
-                  total_price: (item.price_per_unit * newQuantity).toFixed(2),
-                }
-              : item
-          )
-        );
-      } else throw new Error("Failed to update quantity");
+      await updateCartItem(productId, newQuantity);
+      setCartItems((prevItems) =>
+        prevItems.map((item) =>
+          item.product_id === productId
+            ? {
+                ...item,
+                quantity: newQuantity,
+                total_price: (item.price_per_unit * newQuantity).toFixed(2),
+              }
+            : item
+        )
+      );
     } catch (error) {
       console.error("Error updating quantity:", error);
     }
@@ -142,44 +123,34 @@ const CartPage = () => {
       await loadRazorpay();
 
       // Create Razorpay order via backend, passing addressId
-      const response = await fetch("/api/payment/create", {
+      const razorpayOrderId = await request("/api/payment/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ addressId: selectedAddressId })
+        body: { addressId: selectedAddressId },
+        parse: "text",
       });
-
-      if (!response.ok) throw new Error(await response.text());
-      const razorpayOrderId = await response.text();
 
       // Open Razorpay checkout interface
       const options = {
-        key: "rzp_test_LqWBBDbgwot5lh", // Razorpay Key ID
-        amount: Math.round((parseFloat(subtotal) + parseFloat(shipping)) * 100), // Grand total in paise
+        key: "rzp_test_LqWBBDbgwot5lh",
+        amount: Math.round((parseFloat(subtotal) + parseFloat(shipping)) * 100),
         currency: "INR",
         name: "ShopKart",
         description: "Test Transaction",
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
-            // Payment success, verify on backend
-            const verifyResponse = await fetch("/api/payment/verify", {
+            await request("/api/payment/verify", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({
+              body: {
                 razorpayOrderId: response.razorpay_order_id,
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpaySignature: response.razorpay_signature,
-              }),
+              },
+              parse: "text",
             });
-            const result = await verifyResponse.text();
-            if (verifyResponse.ok) {
-              alert("Payment verified successfully!");
-              navigate("/"); // Redirect to Customer Home Page
-            } else {
-              alert("Payment verification failed: " + result);
-            }
+            apiCache.invalidate("cart");
+            alert("Payment verified successfully!");
+            navigate("/");
           } catch (error) {
             console.error("Error verifying payment:", error);
             alert("Payment verification failed. Please try again.");

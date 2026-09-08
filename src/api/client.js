@@ -1,19 +1,20 @@
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+export const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export async function request(path, options = {}) {
-  const { body, headers, parse = 'json', ...rest } = options;
+  const { body, headers, parse = 'json', signal, ...rest } = options;
 
   const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
 
   const response = await fetch(url, {
     credentials: 'include',
+    signal,
     headers: {
-      ...(body !== undefined ? JSON_HEADERS : {}),
+      ...(body !== undefined && !(body instanceof FormData) ? JSON_HEADERS : {}),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
     ...rest,
   });
 
@@ -36,3 +37,10 @@ export async function request(path, options = {}) {
 
   return data;
 }
+
+export const api = {
+  get: (path, options = {}) => request(path, { method: 'GET', ...options }),
+  post: (path, body, options = {}) => request(path, { method: 'POST', body, ...options }),
+  put: (path, body, options = {}) => request(path, { method: 'PUT', body, ...options }),
+  del: (path, options = {}) => request(path, { method: 'DELETE', ...options }),
+};

@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useCartCount } from "@/hooks/useCartCount";
+import { getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress } from "@/api/addresses";
+import { request } from "@/api/client";
 
 export default function AddressManagement() {
   const [addresses, setAddresses] = useState([]);
-  const [cartCount, setCartCount] = useState(0);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { cartCount } = useCartCount({ username });
 
   // Form states
   const [editId, setEditId] = useState(null);
@@ -23,39 +26,33 @@ export default function AddressManagement() {
   const [isDefault, setIsDefault] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     try {
-      const response = await fetch("/api/addresses", {
-        credentials: "include"
-      });
-      if (!response.ok) throw new Error("Failed to load addresses");
-      const data = await response.json();
+      const data = await getAddresses();
       setAddresses(data || []);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to load addresses");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchCartCount = async () => {
+  const fetchUser = useCallback(async () => {
     try {
-      const response = await fetch('/api/cart/items/count', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const count = await response.json();
-        setCartCount(count);
+      const user = await request("/api/users/me");
+      if (user && user.username) {
+        setUsername(user.username);
       }
-    } catch (error) {
-      console.error('Error fetching cart count:', error);
+    } catch {
+      // Guest or error
+      setUsername("Guest");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAddresses();
-    fetchCartCount();
-  }, []);
+    fetchUser();
+  }, [fetchAddresses, fetchUser]);
 
   const handleOpenAdd = () => {
     setEditId(null);
@@ -86,64 +83,35 @@ export default function AddressManagement() {
     const payload = { fullName, phoneNumber, streetAddress, city, state, zipCode, default: isDefault };
 
     try {
-      let response;
       if (editId) {
-        response = await fetch(`/api/addresses/${editId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload)
-        });
+        await updateAddress(editId, payload);
       } else {
-        response = await fetch("/api/addresses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload)
-        });
+        await createAddress(payload);
       }
 
-      if (response.ok) {
-        setShowForm(false);
-        fetchAddresses();
-      } else {
-        alert("Error saving address details");
-      }
+      setShowForm(false);
+      fetchAddresses();
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Error saving address details");
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this address?")) return;
     try {
-      const response = await fetch(`/api/addresses/${id}`, {
-        method: "DELETE",
-        credentials: "include"
-      });
-      if (response.ok) {
-        fetchAddresses();
-      } else {
-        alert("Failed to delete address");
-      }
+      await deleteAddress(id);
+      fetchAddresses();
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to delete address");
     }
   };
 
   const handleSetDefault = async (id) => {
     try {
-      const response = await fetch(`/api/addresses/${id}/default`, {
-        method: "PUT",
-        credentials: "include"
-      });
-      if (response.ok) {
-        fetchAddresses();
-      } else {
-        alert("Failed to set default address");
-      }
+      await setDefaultAddress(id);
+      fetchAddresses();
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to set default address");
     }
   };
 

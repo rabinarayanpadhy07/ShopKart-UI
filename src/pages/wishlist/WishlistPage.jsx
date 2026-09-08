@@ -1,102 +1,65 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useCartCount } from "@/hooks/useCartCount";
+import { getWishlist, removeFromWishlist, moveWishlistToCart } from "@/api/wishlist";
+import { request } from "@/api/client";
 
 export default function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState([]);
-  const [cartCount, setCartCount] = useState(0);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { cartCount } = useCartCount({ username });
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
-      const response = await fetch("/api/wishlist", {
-        credentials: "include"
-      });
-      if (!response.ok) throw new Error("Failed to fetch wishlist");
-      const data = await response.json();
+      const data = await getWishlist();
       setWishlistItems(data || []);
-      if (data.length > 0 && data[0].user) {
+      if (data && data.length > 0 && data[0].user) {
         setUsername(data[0].user.username);
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to fetch wishlist");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchCartCount = async () => {
+  const fetchUserInfo = useCallback(async () => {
     try {
-      const response = await fetch('/api/cart/items/count', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const count = await response.json();
-        setCartCount(count);
-      }
-    } catch (error) {
-      console.error('Error fetching cart count:', error);
-    }
-  };
-
-  const fetchUserInfo = async () => {
-    try {
-      const response = await fetch("/api/users/me", {
-        credentials: "include"
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const data = await request("/api/users/me");
+      if (data && data.username) {
         setUsername(data.username);
       }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
+    } catch {
+      // Guest
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchWishlist();
-    fetchCartCount();
     fetchUserInfo();
-  }, []);
+  }, [fetchWishlist, fetchUserInfo]);
 
   const handleRemove = async (productId) => {
     try {
-      const response = await fetch(`/api/wishlist/remove/${productId}`, {
-        method: "DELETE",
-        credentials: "include"
-      });
-      if (response.ok) {
-        setWishlistItems(prev => prev.filter(item => item.product.productId !== productId));
-      } else {
-        alert("Failed to remove item");
-      }
+      await removeFromWishlist(productId);
+      setWishlistItems(prev => prev.filter(item => item.product.productId !== productId));
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to remove item");
     }
   };
 
   const handleMoveToCart = async (productId) => {
     try {
-      const response = await fetch("/api/wishlist/move-to-cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ productId })
-      });
-      if (response.ok) {
-        setWishlistItems(prev => prev.filter(item => item.product.productId !== productId));
-        fetchCartCount();
-      } else {
-        alert("Failed to move item to cart");
-      }
+      await moveWishlistToCart(productId);
+      setWishlistItems(prev => prev.filter(item => item.product.productId !== productId));
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to move item to cart");
     }
   };
 

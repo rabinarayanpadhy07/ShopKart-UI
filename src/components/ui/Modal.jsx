@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { getCategories } from "@/api/products";
+import { getUserById, modifyUser } from "@/api/admin";
 
 const CustomModal = ({ modalType, onClose, onSubmit, response, initialUser, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -17,8 +19,7 @@ const CustomModal = ({ modalType, onClose, onSubmit, response, initialUser, onSu
 
   useEffect(() => {
     if (modalType === "addProduct") {
-      fetch("/api/products/categories")
-        .then(res => res.json())
+      getCategories()
         .then(data => setDbCategories(data || []))
         .catch(err => console.error("Error fetching categories:", err));
     }
@@ -381,21 +382,11 @@ const ModifyUserFormComponent = ({ onClose, initialUser, onSuccess }) => {
 
       if (!userid) return;
 
-      const response = await fetch(`/admin/users/${userid}`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        setUserDetails(user);
-        setUserId(userid);
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        alert(errData.error || "Failed to find user");
-      }
+      const user = await getUserById(userid);
+      setUserDetails(user);
+      setUserId(userid);
     } catch (error) {
-      console.error("Error fetching user details", error);
+      alert(error.message || "Failed to find user");
     }
   };
 
@@ -408,30 +399,17 @@ const ModifyUserFormComponent = ({ onClose, initialUser, onSuccess }) => {
     const role = formData.get("role");
 
     try {
-      const response = await fetch(`/admin/users/modify/${userId}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          role,
-        }),
+      const user = await modifyUser(userId, {
+        username,
+        email,
+        role,
       });
 
-      if (response.ok) {
-        const user = await response.json();
-        setUpdated(true);
-        setUserDetails(user);
-        if (onSuccess) onSuccess();
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        alert(errData.error || "Failed to update user");
-      }
+      setUpdated(true);
+      setUserDetails(user);
+      if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error updating user details", error);
+      alert(error.message || "Failed to update user");
     }
   };
 

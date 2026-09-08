@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, User, ShoppingCart } from 'lucide-react';
 import { getProductSuggestions } from '@/api/products';
+import { getAddresses } from '@/api/addresses';
 import Logo from '@/components/layout/Logo';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 
-export function Header({ cartCount, username, onSearch, initialSearch = "" }) {
+export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSearch = "" }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState(initialSearch);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -13,29 +14,34 @@ export function Header({ cartCount, username, onSearch, initialSearch = "" }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const boxRef = useRef(null);
   const debounceRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const lastSearchTermRef = useRef("");
   const [pincode, setPincode] = useState("423651");
 
+  // Authentication-aware address loading: only fetch for authenticated users
   useEffect(() => {
+    let isMounted = true;
     if (username && username !== 'Guest') {
-      fetch('/api/addresses', { credentials: 'include' })
-        .then(res => {
-          if (res.ok) return res.json();
-          throw new Error('Failed to fetch');
-        })
+      getAddresses()
         .then(data => {
+          if (!isMounted) return;
           if (Array.isArray(data) && data.length > 0) {
-            const defaultAddress = data.find(addr => addr.isDefault) || data[0];
+            const defaultAddress = data.find(addr => addr.isDefault || addr.default) || data[0];
             if (defaultAddress && defaultAddress.zipCode) {
               setPincode(defaultAddress.zipCode);
             }
           }
         })
-        .catch(err => console.error("Error fetching user address:", err));
+        .catch(err => {
+          if (isMounted) console.error("Error fetching user address:", err);
+        });
     } else {
       setPincode("423651");
     }
+    return () => { isMounted = false; };
   }, [username]);
 
+  // Close suggestions when clicking outside
   useEffect(() => {
     const onClickOutside = (e) => {
       if (boxRef.current && !boxRef.current.contains(e.target)) {
@@ -46,31 +52,66 @@ export function Header({ cartCount, username, onSearch, initialSearch = "" }) {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const fetchSuggestions = (value) => {
+  // Cleanup pending abort controllers and timers on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, []);
+
+  const fetchSuggestions = useCallback((value) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim()) {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
+
     debounceRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
       try {
-        const data = await getProductSuggestions(value.trim());
+        const data = await getProductSuggestions(trimmed, { signal: controller.signal });
         setSuggestions(data.suggestions || []);
         setShowSuggestions(true);
       } catch (err) {
-        console.error('Suggestion fetch failed', err);
+        if (err.name !== 'AbortError' && !controller.signal.aborted) {
+          console.error('Suggestion fetch failed', err);
+        }
+      } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
     }, 220);
-  };
+  }, []);
 
-  const applySearch = (value) => {
+  const applySearch = useCallback((value) => {
     const term = (value ?? query).trim();
     setQuery(term);
     setShowSuggestions(false);
-    if (onSearch) onSearch(term);
-    else navigate(`/?search=${encodeURIComponent(term)}`);
-  };
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+
+    // Prevent duplicate consecutive searches with the exact same query
+    if (lastSearchTermRef.current === term && onSearch) {
+      return;
+    }
+    lastSearchTermRef.current = term;
+
+    if (onSearch) {
+      onSearch(term);
+    } else {
+      navigate(`/?search=${encodeURIComponent(term)}`);
+    }
+  }, [query, onSearch, navigate]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -97,7 +138,7 @@ export function Header({ cartCount, username, onSearch, initialSearch = "" }) {
             className="w-full text-left px-3 py-2.5 hover:bg-muted-bg flex items-start gap-3 cursor-pointer"
           >
             {item.image && (
-              <img src={item.image} alt="" className="h-10 w-10 rounded-lg object-cover bg-muted-bg shrink-0" />
+              <img src={item.image} alt="" className="h-10 w-10 rounded-lg object-cover bg-muted-bg shrink-0" loading="lazy" />
             )}
             <div className="min-w-0">
               <p className="text-sm font-semibold text-ink truncate">{item.name}</p>

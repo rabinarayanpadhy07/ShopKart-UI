@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useCartCount } from '@/hooks/useCartCount';
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { getOrders, cancelOrder, returnOrder, submitReview } from '@/api/orders';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cartCount, setCartCount] = useState(0);
   const [username, setUsername] = useState('');
-  const [cartError, setCartError] = useState(false);
-  const [isCartLoading, setIsCartLoading] = useState(true);
+  const { cartCount, isLoading: isCartLoading, isError: cartError } = useCartCount({ username });
 
   // Modal states
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -28,115 +26,55 @@ export default function OrdersPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      const response = await fetch('/api/orders', {
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Failed to fetch orders');
-      const data = await response.json();
+      const data = await getOrders();
       setOrders(data.products || []);
       setUsername(data.username || 'Guest');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch orders');
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchCartCount = async () => {
-    setIsCartLoading(true);
-    try {
-      const response = await fetch('/api/cart/items/count', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const count = await response.json();
-        setCartCount(count);
-        setCartError(false);
-      } else {
-        setCartError(true);
-      }
-    } catch (error) {
-      console.error('Error fetching cart count:', error);
-      setCartError(true);
-    } finally {
-      setIsCartLoading(false);
-    }
-  };
+  }, []);
 
   useEffect(() => {
     fetchOrders();
-    fetchCartCount();
-  }, []);
+  }, [fetchOrders]);
 
   const handleCancelSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/orders/${activeOrderId}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ reason: cancelReason })
-      });
-      if (response.ok) {
-        setShowCancelModal(false);
-        fetchOrders();
-        alert("Order cancelled successfully!");
-      } else {
-        const err = await response.json();
-        alert(err.error || "Failed to cancel order");
-      }
+      await cancelOrder(activeOrderId, cancelReason);
+      setShowCancelModal(false);
+      fetchOrders();
+      alert("Order cancelled successfully!");
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to cancel order");
     }
   };
 
   const handleReturnSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/orders/${activeOrderId}/return`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ reason: returnReason })
-      });
-      if (response.ok) {
-        setShowReturnModal(false);
-        fetchOrders();
-        alert("Return requested successfully!");
-      } else {
-        const err = await response.json();
-        alert(err.error || "Failed to submit return request");
-      }
+      await returnOrder(activeOrderId, returnReason);
+      setShowReturnModal(false);
+      fetchOrders();
+      alert("Return requested successfully!");
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to submit return request");
     }
   };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          productId: activeProductId,
-          rating: reviewRating,
-          comment: reviewComment
-        })
-      });
-      if (response.ok) {
-        setShowReviewModal(false);
-        fetchOrders();
-        alert("Review submitted successfully!");
-      } else {
-        const err = await response.json();
-        alert(err.error || "Failed to submit review");
-      }
+      await submitReview(activeProductId, reviewRating, reviewComment);
+      setShowReviewModal(false);
+      fetchOrders();
+      alert("Review submitted successfully!");
     } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to submit review");
     }
   };
 

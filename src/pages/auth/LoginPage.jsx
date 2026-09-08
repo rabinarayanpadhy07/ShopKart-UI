@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { User, Lock, AlertCircle } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
@@ -92,9 +92,9 @@ export default function LoginPage() {
           </CardContent>
 
           <CardFooter className="flex flex-col gap-2 text-center text-sm border-t border-border pt-5">
-            <a href="/register" className="text-brand hover:text-brand-hover font-semibold transition-colors">
+            <Link to="/register" className="text-brand hover:text-brand-hover font-semibold transition-colors">
               Create a new account
-            </a>
+            </Link>
           </CardFooter>
         </Card>
       </div>

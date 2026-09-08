@@ -10,6 +10,7 @@ import {
   Send 
 } from 'lucide-react';
 import Logo from '@/components/layout/Logo';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   const [email, setEmail] = useState('');
@@ -146,9 +147,9 @@ export function Footer() {
                 { label: 'Books & Literature', path: '/?search=habits' }
               ].map(item => (
                 <li key={item.label}>
-                  <a href={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
+                  <Link to={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -170,9 +171,15 @@ export function Footer() {
                 { label: 'Terms of Service', path: '#' }
               ].map(item => (
                 <li key={item.label}>
-                  <a href={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
-                    {item.label}
-                  </a>
+                  {item.path.startsWith('/') ? (
+                    <Link to={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a href={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
+                      {item.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
