@@ -1,8 +1,10 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Heart, Star, ShoppingBag, PackageOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { IMAGE_FALLBACK } from '@/lib/placeholder';
 
-export function ProductList({ products, onAddToCart, onAddToWishlist }) {
+export const ProductList = React.memo(function ProductList({ products, onAddToCart, onAddToWishlist }) {
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -19,7 +21,7 @@ export function ProductList({ products, onAddToCart, onAddToWishlist }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
       {products.map((product, index) => {
         const hasImage = product.images?.length > 0;
-        const imageUrl = hasImage ? product.images[0] : 'https://via.placeholder.com/300?text=No+Image';
+        const imageUrl = hasImage ? product.images[0] : IMAGE_FALLBACK;
         const discountPct = product.product_id % 3 === 0 ? 56 : product.product_id % 2 === 0 ? 40 : 25;
         const priceVal = parseFloat(product.price);
         const originalPrice = (priceVal / (1 - discountPct / 100)).toFixed(0);
@@ -27,8 +29,11 @@ export function ProductList({ products, onAddToCart, onAddToWishlist }) {
         const isAboveFold = index < 4;
 
         return (
-          <article
+          <motion.article
             key={product.product_id}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.04, ease: 'easeOut' }}
             className="group flex flex-col bg-white rounded-2xl border border-gray-150 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative text-left"
           >
             {/* Wishlist Button Overlay */}
@@ -55,7 +60,7 @@ export function ProductList({ products, onAddToCart, onAddToWishlist }) {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 loading={isAboveFold ? "eager" : "lazy"}
                 decoding="async"
-                onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=No+Image'; }}
+                onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
               />
             </div>
 
@@ -113,9 +118,9 @@ export function ProductList({ products, onAddToCart, onAddToWishlist }) {
                 </Button>
               </div>
             </div>
-          </article>
+          </motion.article>
         );
       })}
     </div>
   );
-}
+});

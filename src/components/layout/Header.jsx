@@ -5,6 +5,7 @@ import { getProductSuggestions } from '@/api/products';
 import { getAddresses } from '@/api/addresses';
 import Logo from '@/components/layout/Logo';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
+import { useToast } from '@/components/ui/Toast';
 
 export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSearch = "" }) {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
   const abortControllerRef = useRef(null);
   const lastSearchTermRef = useRef("");
   const [pincode, setPincode] = useState("423651");
+  const toast = useToast();
 
   // Authentication-aware address loading: only fetch for authenticated users
   useEffect(() => {
@@ -120,7 +122,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
 
   const handleCartClick = () => {
     if (!username || username === 'Guest') {
-      alert("Please sign up or sign in to view your cart!");
+      toast.info("Please sign up or sign in to view your cart!");
       navigate('/login');
     } else {
       navigate('/cart');

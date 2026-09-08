@@ -11,14 +11,16 @@ import {
 } from 'lucide-react';
 import Logo from '@/components/layout/Logo';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/components/ui/Toast';
 
 export function Footer() {
   const [email, setEmail] = useState('');
+  const toast = useToast();
 
   const handleSubscribe = (e) => {
     e.preventDefault();
     if (!email.trim()) return;
-    alert(`Thank you for subscribing with: ${email}`);
+    toast.success(`Thank you for subscribing with: ${email}`);
     setEmail('');
   };
 
