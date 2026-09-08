@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, User, ShoppingCart } from 'lucide-react';
+import { Search, MapPin, User, ShoppingCart, Loader2, PackageSearch } from 'lucide-react';
 import { getProductSuggestions } from '@/api/products';
 import { getAddresses } from '@/api/addresses';
 import Logo from '@/components/layout/Logo';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 import { useToast } from '@/components/ui/Toast';
+import { IMAGE_FALLBACK } from '@/lib/placeholder';
 
 export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSearch = "" }) {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestQuery, setSuggestQuery] = useState('');
   const boxRef = useRef(null);
   const debounceRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -85,8 +88,14 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
     if (trimmed.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setSuggestLoading(false);
       return;
     }
+
+    // Open the panel immediately in a loading state so the user gets feedback
+    // right away instead of waiting for the debounce + network round trip.
+    setShowSuggestions(true);
+    setSuggestLoading(true);
 
     debounceRef.current = setTimeout(async () => {
       const controller = new AbortController();
@@ -94,10 +103,14 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
       try {
         const data = await getProductSuggestions(trimmed, { signal: controller.signal });
         setSuggestions(data.suggestions || []);
-        setShowSuggestions(true);
+        setSuggestQuery(trimmed);
+        setSuggestLoading(false);
       } catch (err) {
         if (err.name !== 'AbortError' && !controller.signal.aborted) {
           console.error('Suggestion fetch failed', err);
+          setSuggestions([]);
+          setSuggestQuery(trimmed);
+          setSuggestLoading(false);
         }
       } finally {
         if (abortControllerRef.current === controller) {
@@ -111,6 +124,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
     const term = (value ?? query).trim();
     setQuery(term);
     setShowSuggestions(false);
+    setSuggestLoading(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (abortControllerRef.current) abortControllerRef.current.abort();
 
@@ -141,32 +155,51 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
     }
   };
 
-  const suggestionList = showSuggestions && suggestions.length > 0 && (
-    <ul className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-surface border border-border rounded-xl shadow-lg overflow-x-hidden max-h-80 overflow-y-auto overscroll-contain">
-      {suggestions.map((item) => (
-        <li key={item.product_id}>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applySearch(item.name)}
-            className="w-full text-left px-3 py-2.5 hover:bg-muted-bg flex items-start gap-3 cursor-pointer"
-          >
-            {item.image && (
-              <img src={item.image} alt="" className="h-10 w-10 rounded-lg object-cover bg-muted-bg shrink-0" loading="lazy" />
-            )}
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink truncate">{item.name}</p>
-              <p className="text-xs text-ink-muted line-clamp-1">
-                {item.description || item.brand || item.category}
-              </p>
-            </div>
-            {item.price != null && (
-              <span className="ml-auto text-sm font-bold text-ink shrink-0">₹{Number(item.price).toFixed(0)}</span>
-            )}
-          </button>
-        </li>
-      ))}
-    </ul>
+  const suggestionList = showSuggestions && (
+    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-surface border border-border rounded-xl shadow-lg overflow-x-hidden max-h-80 overflow-y-auto overscroll-contain">
+      {suggestLoading ? (
+        <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-ink-muted">
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+          Searching…
+        </div>
+      ) : suggestions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-6 text-center">
+          <PackageSearch className="h-6 w-6 text-ink-muted/50" strokeWidth={1.5} />
+          <p className="text-sm font-semibold text-ink">No products found</p>
+          <p className="text-xs text-ink-muted">Try a different search term{suggestQuery ? ` for "${suggestQuery}"` : ''}</p>
+        </div>
+      ) : (
+        <ul>
+          {suggestions.map((item) => (
+            <li key={item.product_id}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => applySearch(item.name)}
+                className="w-full text-left px-3 py-2.5 hover:bg-muted-bg flex items-center gap-3 cursor-pointer"
+              >
+                <img
+                  src={item.image || IMAGE_FALLBACK}
+                  alt=""
+                  className="h-10 w-10 rounded-lg object-cover bg-muted-bg shrink-0 border border-border"
+                  loading="lazy"
+                  onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-ink truncate">{item.name}</p>
+                  <p className="text-xs text-ink-muted truncate">
+                    {item.brand || item.category || item.description}
+                  </p>
+                </div>
+                {item.price != null && (
+                  <span className="text-sm font-bold text-ink shrink-0">₹{Number(item.price).toFixed(0)}</span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 
   return (
@@ -197,7 +230,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
                   setQuery(e.target.value);
                   fetchSuggestions(e.target.value);
                 }}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                onFocus={() => query.trim().length >= 2 && setShowSuggestions(true)}
                 className="flex-1 bg-muted-bg px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:outline-none rounded-l-xl"
                 autoComplete="off"
               />
@@ -274,6 +307,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
                   setQuery(e.target.value);
                   fetchSuggestions(e.target.value);
                 }}
+                onFocus={() => query.trim().length >= 2 && setShowSuggestions(true)}
                 className="flex-1 bg-muted-bg px-4 py-2.5 text-sm focus:outline-none"
                 autoComplete="off"
               />

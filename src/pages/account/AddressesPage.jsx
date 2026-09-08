@@ -179,7 +179,7 @@ export default function AddressManagement() {
                     id="isDefault"
                     checked={isDefault}
                     onChange={e => setIsDefault(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-[#00ABE4] focus:ring-[#00ABE4]"
+                    className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand/30"
                   />
                   <label htmlFor="isDefault" className="text-xs font-semibold text-slate-700">Set as default delivery address</label>
                 </div>
@@ -205,13 +205,13 @@ export default function AddressManagement() {
         {!loading && !showForm && addresses.length > 0 && (
           <div className="space-y-4">
             {addresses.map((addr) => (
-              <Card key={addr.id} className={`overflow-hidden bg-white border ${addr.default ? 'border-[#00ABE4] shadow-xs' : 'border-gray-200'}`}>
+              <Card key={addr.id} className={`overflow-hidden bg-white border ${addr.default ? 'border-brand shadow-xs' : 'border-gray-200'}`}>
                 <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="text-left space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-800 text-lg">{addr.fullName}</span>
                       {addr.default && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9F1FA] text-[#00ABE4] border border-[#00ABE4]/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-light text-brand border border-brand-muted/40">
                           Default
                         </span>
                       )}

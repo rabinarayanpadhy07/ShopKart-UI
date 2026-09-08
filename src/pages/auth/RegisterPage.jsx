@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Lock, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import Logo from '@/components/layout/Logo';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -18,6 +18,8 @@ const formItem = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };
 
+// 'idle' -> 'loading' -> 'success' (brief confirmation, then navigate). Guards
+// against duplicate submissions from either the password form or Google sign-up.
 export default function RegistrationPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
@@ -25,35 +27,49 @@ export default function RegistrationPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [shake, setShake] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('idle');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const fail = (message) => {
+  const busy = status !== 'idle';
+
+  const fail = useCallback((message) => {
+    setStatus('idle');
     setError(message);
     setShake((n) => n + 1);
-  };
+  }, []);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+    if (busy) return;
     setError(null);
-    setLoading(true);
+    setStatus('loading');
     try {
       await register({ username, email, password });
-      navigate('/login');
+      setSuccessMessage('Account created! Redirecting to sign in…');
+      setStatus('success');
+      window.setTimeout(() => navigate('/login'), 650);
     } catch (err) {
       fail(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
+  const handleGoogleStart = useCallback(() => {
+    if (busy) return;
+    setError(null);
+    setStatus('loading');
+  }, [busy]);
+
   const handleGoogleSuccess = useCallback((data) => {
-    if (data.role === 'ADMIN') navigate('/admindashboard');
-    else navigate('/');
+    setSuccessMessage('Welcome to ShopKart! Redirecting…');
+    setStatus('success');
+    window.setTimeout(() => {
+      navigate(data.role === 'ADMIN' ? '/admindashboard' : '/');
+    }, 650);
   }, [navigate]);
 
   const handleGoogleError = useCallback((message) => {
     fail(message);
-  }, []);
+  }, [fail]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
@@ -84,16 +100,30 @@ export default function RegistrationPage() {
 
             <CardContent className="relative">
               <AnimatePresence>
-                {loading && (
+                {busy && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/80 backdrop-blur-sm rounded-b-2xl"
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-sm rounded-b-2xl"
                   >
-                    <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
-                    <p className="text-sm font-semibold text-ink">Creating your account…</p>
+                    {status === 'success' ? (
+                      <motion.div
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                        className="flex flex-col items-center gap-3"
+                      >
+                        <CheckCircle2 className="h-9 w-9 text-success" strokeWidth={2} />
+                        <p className="text-sm font-semibold text-ink">{successMessage}</p>
+                      </motion.div>
+                    ) : (
+                      <>
+                        <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
+                        <p className="text-sm font-semibold text-ink">Creating your account…</p>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -124,33 +154,34 @@ export default function RegistrationPage() {
                   <label htmlFor="username" className="text-sm font-medium text-ink">Username</label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                    <Input id="username" type="text" placeholder="Choose a username" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10" required />
+                    <Input id="username" type="text" placeholder="Choose a username" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10" required disabled={busy} />
                   </div>
                 </motion.div>
                 <motion.div variants={formItem} className="space-y-1.5">
                   <label htmlFor="email" className="text-sm font-medium text-ink">Email</label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                    <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                    <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required disabled={busy} />
                   </div>
                 </motion.div>
                 <motion.div variants={formItem} className="space-y-1.5">
                   <label htmlFor="password" className="text-sm font-medium text-ink">Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                    <Input id="password" type="password" placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required minLength={8} />
+                    <Input id="password" type="password" placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required minLength={8} disabled={busy} />
                   </div>
                 </motion.div>
                 <motion.div variants={formItem}>
-                  <Button type="submit" disabled={loading} className="w-full h-11 rounded-xl gap-2 mt-2">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} /> : <UserPlus className="h-4 w-4" strokeWidth={2} />}
-                    {loading ? 'Creating account...' : 'Create Account'}
+                  <Button type="submit" disabled={busy} className="w-full h-11 rounded-xl gap-2 mt-2">
+                    {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} /> : <UserPlus className="h-4 w-4" strokeWidth={2} />}
+                    {status === 'loading' ? 'Creating account...' : 'Create Account'}
                   </Button>
                 </motion.div>
               </motion.form>
               <motion.div variants={formItem} initial="hidden" animate="visible">
                 <GoogleSignInButton
                   text="signup_with"
+                  onStart={handleGoogleStart}
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                 />

@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Lock, AlertCircle, Shield } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, Lock, AlertCircle, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -12,11 +13,14 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("idle");
   const navigate = useNavigate();
+
+  const busy = status !== "idle";
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+    if (busy) return;
     setError(null);
 
     if (!username.trim() || !password.trim()) {
@@ -24,27 +28,40 @@ export default function AdminLoginPage() {
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
     try {
       const data = await login(username, password);
       if (data.role === "ADMIN") {
-        navigate("/admindashboard");
+        setStatus("success");
+        window.setTimeout(() => navigate("/admindashboard"), 550);
       } else {
+        setStatus("idle");
         setError("Access denied. Admin role required.");
       }
     } catch (err) {
+      setStatus("idle");
       setError(err.message || "Unexpected error occurred");
-    } finally {
-      setLoading(false);
     }
   };
 
+  const handleGoogleStart = useCallback(() => {
+    if (busy) return;
+    setError(null);
+    setStatus("loading");
+  }, [busy]);
+
   const handleGoogleSuccess = useCallback((data) => {
-    if (data.role === "ADMIN") navigate("/admindashboard");
-    else setError("Access denied. Admin role required.");
+    if (data.role === "ADMIN") {
+      setStatus("success");
+      window.setTimeout(() => navigate("/admindashboard"), 550);
+    } else {
+      setStatus("idle");
+      setError("Access denied. Admin role required.");
+    }
   }, [navigate]);
 
   const handleGoogleError = useCallback((message) => {
+    setStatus("idle");
     setError(message);
   }, []);
 
@@ -64,7 +81,35 @@ export default function AdminLoginPage() {
             <CardDescription>Access the ShopKart admin panel</CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="relative">
+            <AnimatePresence>
+              {busy && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-sm rounded-b-2xl"
+                >
+                  {status === "success" ? (
+                    <motion.div
+                      initial={{ scale: 0.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      className="flex flex-col items-center gap-3"
+                    >
+                      <CheckCircle2 className="h-9 w-9 text-success" strokeWidth={2} />
+                      <p className="text-sm font-semibold text-ink">Welcome back, Admin. Redirecting…</p>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
+                      <p className="text-sm font-semibold text-ink">Signing you in…</p>
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             {error && (
               <div className="bg-red-50 text-danger text-sm p-3 rounded-xl border border-red-100 mb-4 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />
@@ -76,23 +121,24 @@ export default function AdminLoginPage() {
                 <label htmlFor="username" className="text-sm font-medium text-ink">Username</label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                  <Input id="username" type="text" placeholder="Admin username" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10" required />
+                  <Input id="username" type="text" placeholder="Admin username" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10" required disabled={busy} />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="password" className="text-sm font-medium text-ink">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                  <Input id="password" type="password" placeholder="Admin password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required />
+                  <Input id="password" type="password" placeholder="Admin password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required disabled={busy} />
                 </div>
               </div>
-              <Button type="submit" disabled={loading} variant="secondary" className="w-full h-11 rounded-xl mt-2">
-                {loading ? "Signing in..." : "Enter as Admin"}
+              <Button type="submit" disabled={busy} variant="secondary" className="w-full h-11 rounded-xl mt-2">
+                {status === "loading" ? "Signing in..." : "Enter as Admin"}
               </Button>
             </form>
             <GoogleSignInButton
               text="signin_with"
               expectedRole="ADMIN"
+              onStart={handleGoogleStart}
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
             />

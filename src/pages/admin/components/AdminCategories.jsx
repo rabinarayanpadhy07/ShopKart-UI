@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 import { addCategory } from "@/api/admin";
 
 export function AdminCategories({
@@ -10,6 +11,7 @@ export function AdminCategories({
   productsList = [],
   onCategoryAdded,
 }) {
+  const toast = useToast();
   const [categoryName, setCategoryName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,10 +27,10 @@ export function AdminCategories({
     try {
       await addCategory(categoryName.trim());
       setCategoryName("");
-      alert("Category registered successfully!");
+      toast.success("Category registered successfully.");
       if (onCategoryAdded) onCategoryAdded();
     } catch (err) {
-      alert(err.message || "Failed to add category");
+      toast.error(err.message || "Failed to add category");
     } finally {
       setSubmitting(false);
     }

@@ -47,7 +47,7 @@ export function AdminFinance({
       {/* Financial Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden border border-slate-800">
-          <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-[#00ABE4]/10 rounded-full blur-2xl"></div>
+          <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-brand/10 rounded-full blur-2xl"></div>
           <div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cumulative Value</p>
             <p className="text-[10px] text-slate-400 font-medium italic">(Since database initiation)</p>
@@ -55,7 +55,7 @@ export function AdminFinance({
           {overallLoading ? (
             <p className="text-xl font-bold mt-4 animate-pulse">Running metrics...</p>
           ) : (
-            <p className="text-3xl font-black text-[#00ABE4] mt-4">
+            <p className="text-3xl font-black text-brand mt-4">
               ₹{overallStats?.totalBusiness !== undefined ? parseFloat(overallStats.totalBusiness).toFixed(2) : "0.00"}
             </p>
           )}
@@ -135,7 +135,7 @@ export function AdminFinance({
                   id="year"
                   name="year"
                   required
-                  className="flex h-10 w-full rounded-xl border border-slate-350 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#00ABE4]"
+                  className="flex h-10 w-full rounded-xl border border-slate-350 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   {Array.from({ length: 11 }, (_, i) => 2020 + i).map((y) => (
                     <option key={y} value={y}>

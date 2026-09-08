@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Lock, AlertCircle, Loader2 } from "lucide-react";
+import { User, Lock, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -23,44 +23,63 @@ const formItem = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };
 
+// 'idle' -> 'loading' (request in flight) -> 'success' (brief confirmation) -> navigate away.
+// Any request path (password or Google) can only start from 'idle', which is what
+// guards against duplicate submissions from either path while one is already running.
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [shake, setShake] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("idle");
   const navigate = useNavigate();
 
-  const fail = (message) => {
+  const busy = status !== "idle";
+
+  // Stable identities (only close over stable setters/navigate) so passing them
+  // to GoogleSignInButton doesn't force it to re-render its effect every render.
+  const fail = useCallback((message) => {
+    setStatus("idle");
     setError(message);
     setShake((n) => n + 1);
-  };
+  }, []);
+
+  const succeed = useCallback((role) => {
+    setError(null);
+    setStatus("success");
+    window.setTimeout(() => redirectAfterAuth(navigate, role), 550);
+  }, [navigate]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     if (!username.trim() || !password.trim()) {
       fail("Username and password are required");
       return;
     }
-    setLoading(true);
+    setStatus("loading");
     try {
       const data = await login(username, password);
-      redirectAfterAuth(navigate, data.role);
+      succeed(data.role);
     } catch (err) {
       fail(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
+  const handleGoogleStart = useCallback(() => {
+    if (busy) return;
+    setError(null);
+    setStatus("loading");
+  }, [busy]);
+
   const handleGoogleSuccess = useCallback((data) => {
-    redirectAfterAuth(navigate, data.role);
-  }, [navigate]);
+    succeed(data.role);
+  }, [succeed]);
 
   const handleGoogleError = useCallback((message) => {
     fail(message);
-  }, []);
+  }, [fail]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
@@ -91,16 +110,30 @@ export default function LoginPage() {
 
             <CardContent className="relative">
               <AnimatePresence>
-                {loading && (
+                {busy && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/80 backdrop-blur-sm rounded-b-2xl"
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-sm rounded-b-2xl"
                   >
-                    <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
-                    <p className="text-sm font-semibold text-ink">Signing you in…</p>
+                    {status === "success" ? (
+                      <motion.div
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        className="flex flex-col items-center gap-3"
+                      >
+                        <CheckCircle2 className="h-9 w-9 text-success" strokeWidth={2} />
+                        <p className="text-sm font-semibold text-ink">Welcome back! Redirecting…</p>
+                      </motion.div>
+                    ) : (
+                      <>
+                        <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
+                        <p className="text-sm font-semibold text-ink">Signing you in…</p>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -131,26 +164,27 @@ export default function LoginPage() {
                   <label htmlFor="username" className="text-sm font-medium text-ink">Username</label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                    <Input id="username" type="text" placeholder="Your username" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10" required />
+                    <Input id="username" type="text" placeholder="Your username" value={username} onChange={(e) => setUsername(e.target.value)} className="pl-10" required disabled={busy} />
                   </div>
                 </motion.div>
                 <motion.div variants={formItem} className="space-y-1.5">
                   <label htmlFor="password" className="text-sm font-medium text-ink">Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" strokeWidth={2} />
-                    <Input id="password" type="password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required />
+                    <Input id="password" type="password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required disabled={busy} />
                   </div>
                 </motion.div>
                 <motion.div variants={formItem}>
-                  <Button type="submit" disabled={loading} className="w-full h-11 rounded-xl mt-2 gap-2">
-                    {loading && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />}
-                    {loading ? "Signing in..." : "Sign In"}
+                  <Button type="submit" disabled={busy} className="w-full h-11 rounded-xl mt-2 gap-2">
+                    {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />}
+                    {status === "loading" ? "Signing in..." : "Sign In"}
                   </Button>
                 </motion.div>
               </motion.form>
               <motion.div variants={formItem} initial="hidden" animate="visible">
                 <GoogleSignInButton
                   text="signin_with"
+                  onStart={handleGoogleStart}
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                 />

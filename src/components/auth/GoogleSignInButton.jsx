@@ -32,6 +32,7 @@ function loadGoogleScript() {
 export function GoogleSignInButton({
   onSuccess,
   onError,
+  onStart,
   text = 'continue_with',
   expectedRole,
 }) {
@@ -44,6 +45,7 @@ export function GoogleSignInButton({
     let cancelled = false;
 
     const handleCredential = async (response) => {
+      onStart?.();
       try {
         const data = await googleLogin(response.credential, expectedRole);
         if (!cancelled) onSuccess?.(data);
@@ -75,7 +77,7 @@ export function GoogleSignInButton({
     return () => {
       cancelled = true;
     };
-  }, [configured, clientId, text, expectedRole, onSuccess, onError]);
+  }, [configured, clientId, text, expectedRole, onSuccess, onError, onStart]);
 
   return (
     <div className="mt-4 space-y-3">
