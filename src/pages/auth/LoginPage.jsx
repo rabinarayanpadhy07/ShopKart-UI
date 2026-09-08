@@ -47,7 +47,7 @@ export default function LoginPage() {
   const succeed = useCallback((role) => {
     setError(null);
     setStatus("success");
-    window.setTimeout(() => redirectAfterAuth(navigate, role), 550);
+    window.setTimeout(() => redirectAfterAuth(navigate, role), 280);
   }, [navigate]);
 
   const handleSignIn = async (e) => {
