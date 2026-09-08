@@ -25,7 +25,11 @@ export function AdminOverview({
 }) {
   const lowStockProducts = productsList.filter((p) => p.stock <= 10);
   const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .sort((a, b) => {
+      const aTime = Date.parse(a.createdAt || "") || 0;
+      const bTime = Date.parse(b.createdAt || "") || 0;
+      return bTime - aTime;
+    })
     .slice(0, 5);
 
   const pendingOrdersCount = orders.filter((o) =>
@@ -147,12 +151,12 @@ export function AdminOverview({
               <div className="py-12 text-center text-xs text-slate-400 italic">No order history recorded.</div>
             ) : (
               recentOrders.map((order) => (
-                <div key={order.orderId} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                  <div>
+                <div key={order.orderId} className="flex flex-col gap-2 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <p className="font-mono text-xs font-bold text-slate-700">{order.orderId}</p>
                     <p className="text-[10px] text-slate-400">Date: {new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <span className="font-bold text-slate-850 text-xs">₹{parseFloat(order.totalAmount).toFixed(2)}</span>
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${

@@ -131,6 +131,17 @@ export default function AdminDashboard() {
     }
   }, [activeTab, fetchOrders, fetchUsers, fetchCategories, fetchOverallStats]);
 
+  useEffect(() => {
+    const refreshOrders = () => fetchOrders(true);
+    window.addEventListener("focus", refreshOrders);
+    const refreshTimer = window.setInterval(refreshOrders, 30000);
+
+    return () => {
+      window.removeEventListener("focus", refreshOrders);
+      window.clearInterval(refreshTimer);
+    };
+  }, [fetchOrders]);
+
   const handleLogout = async () => {
     try {
       await logout();
