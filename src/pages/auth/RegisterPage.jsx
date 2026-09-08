@@ -47,7 +47,7 @@ export default function RegistrationPage() {
       await register({ username, email, password });
       setSuccessMessage('Account created! Redirecting to sign in…');
       setStatus('success');
-      window.setTimeout(() => navigate('/login'), 650);
+      window.setTimeout(() => navigate('/login'), 280);
     } catch (err) {
       fail(err.message);
     }
@@ -64,7 +64,7 @@ export default function RegistrationPage() {
     setStatus('success');
     window.setTimeout(() => {
       navigate(data.role === 'ADMIN' ? '/admindashboard' : '/');
-    }, 650);
+    }, 280);
   }, [navigate]);
 
   const handleGoogleError = useCallback((message) => {

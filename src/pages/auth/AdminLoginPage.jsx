@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
       const data = await login(username, password);
       if (data.role === "ADMIN") {
         setStatus("success");
-        window.setTimeout(() => navigate("/admindashboard"), 550);
+        window.setTimeout(() => navigate("/admindashboard"), 280);
       } else {
         setStatus("idle");
         setError("Access denied. Admin role required.");
@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
   const handleGoogleSuccess = useCallback((data) => {
     if (data.role === "ADMIN") {
       setStatus("success");
-      window.setTimeout(() => navigate("/admindashboard"), 550);
+      window.setTimeout(() => navigate("/admindashboard"), 280);
     } else {
       setStatus("idle");
       setError("Access denied. Admin role required.");
