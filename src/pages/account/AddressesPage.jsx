@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 import { useCartCount } from "@/hooks/useCartCount";
 import { getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress } from "@/api/addresses";
 import { request } from "@/api/client";
@@ -14,6 +15,7 @@ export default function AddressManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { cartCount } = useCartCount({ username });
+  const toast = useToast();
 
   // Form states
   const [editId, setEditId] = useState(null);
@@ -91,8 +93,9 @@ export default function AddressManagement() {
 
       setShowForm(false);
       fetchAddresses();
+      toast.success(editId ? "Address updated." : "Address added.");
     } catch (err) {
-      alert(err.message || "Error saving address details");
+      toast.error(err.message || "Error saving address details");
     }
   };
 
@@ -101,8 +104,9 @@ export default function AddressManagement() {
     try {
       await deleteAddress(id);
       fetchAddresses();
+      toast.success("Address deleted.");
     } catch (err) {
-      alert(err.message || "Failed to delete address");
+      toast.error(err.message || "Failed to delete address");
     }
   };
 
@@ -111,7 +115,7 @@ export default function AddressManagement() {
       await setDefaultAddress(id);
       fetchAddresses();
     } catch (err) {
-      alert(err.message || "Failed to set default address");
+      toast.error(err.message || "Failed to set default address");
     }
   };
 

@@ -9,6 +9,7 @@ import { getProducts } from '@/api/products';
 import { addToCart } from '@/api/cart';
 import { addToWishlist } from '@/api/wishlist';
 import { useCartCount } from '@/hooks/useCartCount';
+import { useToast } from '@/components/ui/Toast';
 
 const TRUST_BADGES = [
   { Icon: Truck, label: 'Free Delivery', sub: 'On orders ₹499+' },
@@ -77,6 +78,7 @@ export default function CustomerHomePage() {
   // Authentication-aware: do not request cart count for guests
   const isAuth = Boolean(username && username !== 'Guest');
   const { cartCount, loading: isCartLoading } = useCartCount({ enabled: isAuth, username });
+  const toast = useToast();
 
   // Unified single-request pipeline with AbortController for stale cancellation
   useEffect(() => {
@@ -142,28 +144,30 @@ export default function CustomerHomePage() {
 
   const handleAddToCart = async (productId) => {
     if (!isAuth) {
-      alert('Please sign in to add items to cart');
+      toast.info('Please sign in to add items to cart');
       navigate('/login');
       return;
     }
     try {
       await addToCart(productId);
+      toast.success('Added to cart.');
     } catch (e) {
       console.error('Error adding to cart:', e);
+      toast.error(e.message || 'Failed to add to cart');
     }
   };
 
   const handleAddToWishlist = async (productId) => {
     if (!isAuth) {
-      alert('Please sign in to use wishlist');
+      toast.info('Please sign in to use wishlist');
       navigate('/login');
       return;
     }
     try {
       await addToWishlist(productId);
-      alert('Added to wishlist!');
+      toast.success('Added to wishlist!');
     } catch (e) {
-      alert(e.message || 'Failed to add to wishlist');
+      toast.error(e.message || 'Failed to add to wishlist');
     }
   };
 

@@ -14,8 +14,18 @@ export async function getCartCount(options = {}) {
   return num;
 }
 
-export function getCartItems(options = {}) {
-  return request('/api/cart/items', options);
+export async function getCartItems(options = {}) {
+  const cacheKey = 'cart:items';
+  const cached = apiCache.get(cacheKey);
+  if (cached && !options.skipCache) {
+    return cached;
+  }
+
+  const data = await request('/api/cart/items', options);
+  if (data) {
+    apiCache.set(cacheKey, data, 15000); // short TTL - cart contents change often
+  }
+  return data;
 }
 
 export async function addToCart(productId, quantity = 1) {

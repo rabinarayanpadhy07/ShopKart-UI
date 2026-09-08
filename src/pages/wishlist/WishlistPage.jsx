@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { IMAGE_FALLBACK } from "@/lib/placeholder";
 import { useCartCount } from "@/hooks/useCartCount";
 import { getWishlist, removeFromWishlist, moveWishlistToCart } from "@/api/wishlist";
 import { request } from "@/api/client";
@@ -14,6 +17,7 @@ export default function WishlistPage() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { cartCount } = useCartCount({ username });
+  const toast = useToast();
 
   const fetchWishlist = useCallback(async () => {
     try {
@@ -50,7 +54,7 @@ export default function WishlistPage() {
       await removeFromWishlist(productId);
       setWishlistItems(prev => prev.filter(item => item.product.productId !== productId));
     } catch (err) {
-      alert(err.message || "Failed to remove item");
+      toast.error(err.message || "Failed to remove item");
     }
   };
 
@@ -58,8 +62,9 @@ export default function WishlistPage() {
     try {
       await moveWishlistToCart(productId);
       setWishlistItems(prev => prev.filter(item => item.product.productId !== productId));
+      toast.success("Moved to cart.");
     } catch (err) {
-      alert(err.message || "Failed to move item to cart");
+      toast.error(err.message || "Failed to move item to cart");
     }
   };
 
@@ -70,7 +75,7 @@ export default function WishlistPage() {
         <h1 className="text-3xl font-extrabold text-slate-800 mb-6">Your Wishlist</h1>
         {loading && (
           <div className="text-center py-10 text-slate-500">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#00ABE4] mb-2"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand mb-2"></div>
             <p>Loading wishlist...</p>
           </div>
         )}
@@ -92,15 +97,21 @@ export default function WishlistPage() {
         )}
         {!loading && !error && wishlistItems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {wishlistItems.map((item) => {
+            <AnimatePresence initial={false}>
+            {wishlistItems.map((item, index) => {
               const product = item.product;
               const discountPct = product.productId % 3 === 0 ? 56 : product.productId % 2 === 0 ? 40 : 25;
               const priceVal = parseFloat(product.price);
               const originalPrice = (priceVal / (1 - discountPct / 100)).toFixed(0);
               const savedAmt = (originalPrice - priceVal).toFixed(0);
               return (
-                <article
+                <motion.article
                   key={item.id}
+                  layout
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.04, ease: 'easeOut' }}
                   className="group flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative text-left"
                 >
                   {/* Remove Button Overlay */}
@@ -124,11 +135,11 @@ export default function WishlistPage() {
                   {/* Image Container */}
                   <div className="relative aspect-square bg-slate-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-4">
                     <img
-                      src={product.imageUrl || "https://via.placeholder.com/300?text=No+Image"}
+                      src={product.imageUrl || IMAGE_FALLBACK}
                       alt={product.name}
                       className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
-                      onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=No+Image'; }}
+                      onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                     />
                   </div>
 
@@ -165,9 +176,10 @@ export default function WishlistPage() {
                       </Button>
                     </div>
                   </div>
-                </article>
+                </motion.article>
               );
             })}
+            </AnimatePresence>
           </div>
         )}
       </main>

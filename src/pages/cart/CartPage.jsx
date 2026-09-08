@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Minus, Plus, ShoppingBag, MapPin } from "lucide-react";
 import { StoreLayout } from "@/components/layout/StoreLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { IMAGE_FALLBACK } from "@/lib/placeholder";
 import { getCartItems, removeCartItem, updateCartItem } from "@/api/cart";
 import { getAddresses } from "@/api/addresses";
 import { request } from "@/api/client";
@@ -37,6 +40,7 @@ const CartPage = () => {
   // Address states
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const toast = useToast();
 
   const fetchCartItems = async () => {
     try {
@@ -115,7 +119,7 @@ const CartPage = () => {
   // Razorpay integration for payment
   const handleCheckout = async () => {
     if (!selectedAddressId) {
-      alert("Please select a delivery address first!");
+      toast.error("Please select a delivery address first!");
       return;
     }
 
@@ -131,7 +135,7 @@ const CartPage = () => {
 
       // Open Razorpay checkout interface
       const options = {
-        key: "rzp_test_LqWBBDbgwot5lh",
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: Math.round((parseFloat(subtotal) + parseFloat(shipping)) * 100),
         currency: "INR",
         name: "ShopKart",
@@ -149,11 +153,11 @@ const CartPage = () => {
               parse: "text",
             });
             apiCache.invalidate("cart");
-            alert("Payment verified successfully!");
+            toast.success("Payment verified successfully!");
             navigate("/");
           } catch (error) {
             console.error("Error verifying payment:", error);
-            alert("Payment verification failed. Please try again.");
+            toast.error("Payment verification failed. Please try again.");
           }
         },
         prefill: {
@@ -167,7 +171,7 @@ const CartPage = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      alert("Payment failed. Please try again: " + error.message);
+      toast.error("Payment failed. Please try again: " + error.message);
       console.error("Error during checkout:", error);
     }
   };
@@ -178,7 +182,12 @@ const CartPage = () => {
 
   return (
     <StoreLayout cartCount={totalProducts()} username={username} mainClassName="flex-grow max-w-7xl mx-auto w-full py-8 px-4 md:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="flex flex-col lg:flex-row gap-8"
+        >
           <div className="flex-grow lg:w-2/3 space-y-6">
             <Card className="bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden">
               <CardHeader className="border-b border-gray-100 bg-slate-50/50">
@@ -210,13 +219,22 @@ const CartPage = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    <AnimatePresence initial={false}>
                     {cartItems.map((item) => (
-                      <div key={item.product_id} className="p-4 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-white border border-gray-200 rounded-2xl hover:shadow-md transition-shadow">
+                      <motion.div
+                        key={item.product_id}
+                        layout
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -24, transition: { duration: 0.2 } }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                        className="p-4 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-white border border-gray-200 rounded-2xl hover:shadow-md transition-shadow"
+                      >
                         <img
-                          src={item.image_url || "https://via.placeholder.com/80?text=No+Image"}
+                          src={item.image_url || IMAGE_FALLBACK}
                           alt={item.name}
                           className="h-24 w-24 rounded-xl object-cover bg-slate-50 border border-gray-100 flex-shrink-0"
-                          onError={(e) => { e.target.src = "https://via.placeholder.com/80?text=No+Image"; }}
+                          onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                         />
                         <div className="flex-grow text-center sm:text-left space-y-1">
                           <h3 className="text-base font-bold text-slate-800">{item.name}</h3>
@@ -251,8 +269,9 @@ const CartPage = () => {
                             <Trash2 className="h-4 w-4" strokeWidth={2} />
                           </button>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
+                    </AnimatePresence>
                   </div>
                 )}
               </CardContent>
@@ -361,7 +380,7 @@ const CartPage = () => {
               </Card>
             </div>
           )}
-        </div>
+        </motion.div>
     </StoreLayout>
   );
 };
