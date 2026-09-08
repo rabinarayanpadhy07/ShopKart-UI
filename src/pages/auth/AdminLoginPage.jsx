@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { User, Lock, AlertCircle, Shield, Loader2 } from "lucide-react";
+import { User, Lock, AlertCircle, Shield } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -80,20 +79,6 @@ export default function AdminLoginPage() {
           </CardHeader>
 
           <CardContent className="relative">
-            <AnimatePresence>
-              {busy && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-sm rounded-b-2xl"
-                >
-                  <Loader2 className="h-8 w-8 text-brand animate-spin" strokeWidth={2} />
-                  <p className="text-sm font-semibold text-ink">Signing you in…</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
             {error && (
               <div className="bg-red-50 text-danger text-sm p-3 rounded-xl border border-red-100 mb-4 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />
