@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Star, ShoppingBag, Check } from 'lucide-react';
@@ -38,6 +38,15 @@ export function StockBadge({ stock, className }) {
   return null;
 }
 
+/**
+ * Near-square photos fill the whole image area edge to edge; very tall or wide ones
+ * (book covers, panoramic shots) stay fully visible instead of being cropped.
+ */
+function fitFor(img) {
+  const ratio = img.naturalWidth / img.naturalHeight;
+  return ratio > 0.8 && ratio < 1.25 ? 'cover' : 'contain';
+}
+
 export const ProductCard = React.memo(function ProductCard({
   product,
   index = 0,
@@ -50,6 +59,7 @@ export const ProductCard = React.memo(function ProductCard({
   const price = Number(product.price);
   const outOfStock = product.stock <= 0;
   const label = product.brand || product.category;
+  const [fit, setFit] = useState('cover');
 
   return (
     <motion.article
@@ -68,11 +78,13 @@ export const ProductCard = React.memo(function ProductCard({
           src={image}
           alt=""
           className={cn(
-            'h-full w-full object-contain p-5 mix-blend-multiply transition-transform duration-500 group-hover:scale-105',
+            'h-full w-full mix-blend-multiply transition-transform duration-500 group-hover:scale-105',
+            fit === 'cover' ? 'object-cover' : 'object-contain',
             outOfStock && 'opacity-60'
           )}
           loading={index < 4 ? 'eager' : 'lazy'}
           decoding="async"
+          onLoad={(e) => setFit(fitFor(e.currentTarget))}
           onError={(e) => { e.currentTarget.src = IMAGE_FALLBACK; }}
         />
         <StockBadge stock={product.stock} className="absolute left-3 top-3" />
