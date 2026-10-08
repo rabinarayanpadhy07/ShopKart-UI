@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PackageCheck, CalendarDays, Hash } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -8,6 +9,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from '@/components/ui/Toast';
 import { IMAGE_FALLBACK } from '@/lib/placeholder';
+import { getProductImage } from '@/lib/productImages';
 import { getOrders, cancelOrder, returnOrder, submitReview } from '@/api/orders';
 
 function formatOrderDate(value) {
@@ -40,6 +42,7 @@ const modalPanel = {
 };
 
 export default function OrdersPage() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -212,13 +215,19 @@ export default function OrdersPage() {
                       <CardContent className="p-6">
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                           <img
-                            src={order.image_url || IMAGE_FALLBACK}
+                            src={getProductImage(order)}
                             alt={order.name}
-                            className="h-24 w-24 rounded-lg object-cover bg-muted-bg border border-border"
+                            onClick={() => order.product_id && navigate(`/products/${order.product_id}`)}
+                            className={`h-24 w-24 rounded-lg object-contain p-1.5 bg-muted-bg border border-border ${order.product_id ? 'cursor-pointer hover:opacity-90' : ''}`}
                             onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                           />
                           <div className="flex-grow text-center sm:text-left space-y-1">
-                            <h3 className="text-xl font-bold text-ink">{order.name}</h3>
+                            <h3
+                              onClick={() => order.product_id && navigate(`/products/${order.product_id}`)}
+                              className={`text-xl font-bold text-ink ${order.product_id ? 'cursor-pointer hover:text-brand transition-colors' : ''}`}
+                            >
+                              {order.name}
+                            </h3>
                             <p className="text-sm text-ink-muted line-clamp-2">{order.description || 'No description available.'}</p>
 
                             {order.status === 'CANCELLED' && order.cancellation_reason && (

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { IMAGE_FALLBACK } from "@/lib/placeholder";
+import { getProductImage } from "@/lib/productImages";
 import { getProducts } from "@/api/products";
 import { addAdminProduct, modifyAdminProduct, deleteAdminProduct } from "@/api/admin";
 
@@ -222,14 +223,13 @@ export function AdminProducts({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {products.map((p) => {
-                  const firstImage = p.images && p.images[0] ? p.images[0] : "";
                   return (
                     <tr key={p.product_id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-4">
                         <img
-                          src={firstImage || IMAGE_FALLBACK}
+                          src={getProductImage(p)}
                           alt={p.name}
-                          className="h-10 w-10 rounded-lg object-cover bg-slate-50 border border-slate-150"
+                          className="h-10 w-10 rounded-lg object-contain p-1 bg-slate-50 border border-slate-150"
                           loading="lazy"
                           onError={(e) => {
                             e.target.src = IMAGE_FALLBACK;

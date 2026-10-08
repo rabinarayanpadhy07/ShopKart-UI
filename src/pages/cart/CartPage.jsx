@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { IMAGE_FALLBACK } from "@/lib/placeholder";
+import { getProductImage } from "@/lib/productImages";
 import { getCartItems, removeCartItem, updateCartItem } from "@/api/cart";
 import { getAddresses } from "@/api/addresses";
 import { request } from "@/api/client";
@@ -248,13 +249,19 @@ const CartPage = () => {
                         className="relative flex flex-col sm:flex-row items-center gap-5 bg-surface border border-border rounded-2xl p-4 sm:p-5 hover:shadow-md hover:border-brand-muted/50 transition-all"
                       >
                         <img
-                          src={item.image_url || IMAGE_FALLBACK}
+                          src={getProductImage(item)}
                           alt={item.name}
-                          className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover bg-muted-bg border border-border flex-shrink-0"
+                          onClick={() => navigate(`/products/${item.product_id}`)}
+                          className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-contain p-2 bg-muted-bg border border-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
                           onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                         />
                         <div className="flex-grow min-w-0 text-center sm:text-left space-y-1.5">
-                          <h3 className="text-base font-bold text-ink line-clamp-1">{item.name}</h3>
+                          <h3
+                            onClick={() => navigate(`/products/${item.product_id}`)}
+                            className="text-base font-bold text-ink line-clamp-1 cursor-pointer hover:text-brand transition-colors"
+                          >
+                            {item.name}
+                          </h3>
                           <p className="text-xs text-ink-muted line-clamp-2 max-w-md">{item.description}</p>
                           <div className="flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
                             <span className="text-sm font-bold text-brand">₹{parseFloat(item.price_per_unit).toFixed(2)}</span>

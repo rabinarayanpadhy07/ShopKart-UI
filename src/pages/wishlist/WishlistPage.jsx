@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { IMAGE_FALLBACK } from "@/lib/placeholder";
+import { getProductImage } from "@/lib/productImages";
 import { useCartCount } from "@/hooks/useCartCount";
 import { getWishlist, removeFromWishlist, moveWishlistToCart } from "@/api/wishlist";
 import { request } from "@/api/client";
@@ -133,9 +134,12 @@ export default function WishlistPage() {
                   )}
 
                   {/* Image Container */}
-                  <div className="relative aspect-square bg-slate-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-4">
+                  <div
+                    onClick={() => navigate(`/products/${product.productId}`)}
+                    className="relative aspect-square bg-slate-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-4 cursor-pointer"
+                  >
                     <img
-                      src={product.imageUrl || IMAGE_FALLBACK}
+                      src={getProductImage(product)}
                       alt={product.name}
                       className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
@@ -156,7 +160,12 @@ export default function WishlistPage() {
                       )}
                     </div>
 
-                    <h3 className="text-sm font-bold text-slate-800 line-clamp-2 leading-relaxed min-h-[40px]">{product.name}</h3>
+                    <h3
+                      onClick={() => navigate(`/products/${product.productId}`)}
+                      className="text-sm font-bold text-slate-800 line-clamp-2 leading-relaxed min-h-[40px] cursor-pointer hover:text-brand transition-colors"
+                    >
+                      {product.name}
+                    </h3>
                     <p className="text-xs text-slate-500 line-clamp-2 min-h-[32px]">{product.description || 'No description available.'}</p>
 
                     <div className="mt-auto pt-2 space-y-2">

@@ -57,3 +57,18 @@ export async function getProductFilters(options = {}) {
   }
   return data;
 }
+
+export async function getProductById(id, options = {}) {
+  const cacheKey = `product:${id}`;
+  const cached = apiCache.get(cacheKey);
+  if (cached && !options.skipCache) {
+    return cached;
+  }
+
+  const data = await request(`/api/products/${id}`, options);
+  if (data) {
+    apiCache.set(cacheKey, data, 60000); // 1 minute TTL
+  }
+  return data;
+}
+

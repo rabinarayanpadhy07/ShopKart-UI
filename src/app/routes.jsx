@@ -11,6 +11,7 @@ const OrdersPage = lazy(() => import('@/pages/orders/OrdersPage'));
 const WishlistPage = lazy(() => import('@/pages/wishlist/WishlistPage'));
 const AddressesPage = lazy(() => import('@/pages/account/AddressesPage'));
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const ProductDetailPage = lazy(() => import('@/pages/product/ProductDetailPage'));
 
 function RouteLoadingFallback() {
   return (
@@ -28,6 +29,8 @@ export default function AppRoutes() {
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+        <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />

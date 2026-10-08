@@ -28,8 +28,8 @@ export function Footer() {
           {/* Brand Info & Social Links */}
           <div className="space-y-3.5">
             <Logo size="large" variant="light" />
-            <p className="text-xs leading-relaxed text-slate-500 max-w-xs">
-              Gadgets, fashion and lifestyle essentials, delivered fast with easy 7-day returns.
+            <p className="text-xs leading-relaxed text-slate-400 max-w-xs">
+              Your everyday everything store — 100% genuine brands, curated lifestyle essentials, unbeatable prices, and lightning-fast delivery to your doorstep.
             </p>
 
             {/* Social Links using Inline SVGs for version safety */}

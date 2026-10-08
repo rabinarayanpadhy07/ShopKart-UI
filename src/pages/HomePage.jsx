@@ -21,30 +21,30 @@ const TRUST_BADGES = [
 
 const HERO_SLIDES = [
   {
-    tag: 'New Arrivals',
-    title: 'Upgrade your tech',
-    subtitle: 'Latest smartphones & gadgets at unbeatable prices',
-    cta: 'Shop Electronics',
+    tag: '✨ Flagship Tech • Up to 40% Off',
+    title: 'Next-Gen Performance, Within Your Reach',
+    subtitle: 'Experience authentic flagship smartphones, smart audio, and cutting-edge gear at guaranteed best prices.',
+    cta: 'Shop Flagship Mobiles',
     category: 'Mobiles',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=400&auto=format&fit=crop',
+    image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=800',
     accent: 'from-orange-500/10 to-amber-50',
   },
   {
-    tag: 'Trending Now',
-    title: 'Style that speaks',
-    subtitle: 'Fresh fashion picks curated just for you',
-    cta: 'Shop Fashion',
+    tag: '🔥 Fresh Season Drop',
+    title: 'Timeless Style Crafted for Comfort',
+    subtitle: 'Handpicked breathable cotton shirts, relaxed linen & authentic denim curated for effortless everyday confidence.',
+    cta: 'Explore Wardrobe',
     category: 'Shirts',
-    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=400&auto=format&fit=crop',
+    image: 'https://images.pexels.com/photos/297933/pexels-photo-297933.jpeg?auto=compress&cs=tinysrgb&w=800',
     accent: 'from-rose-500/10 to-pink-50',
   },
   {
-    tag: 'Limited Offer',
-    title: 'Smart wearables',
-    subtitle: 'Up to 60% off on watches & accessories',
-    cta: 'Shop Now',
+    tag: '💎 Exclusive Lifestyle Deals',
+    title: 'Curated Essentials for Modern Living',
+    subtitle: 'Ultra-slim leather wallets, polarized eyewear & smart appliances engineered for perfection.',
+    cta: 'Discover Accessories',
     category: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop',
+    image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=800',
     accent: 'from-blue-500/10 to-sky-50',
   },
 ];
@@ -236,12 +236,10 @@ export default function CustomerHomePage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className="relative max-h-60 object-contain drop-shadow-2xl rounded-2xl"
+                className="relative h-52 sm:h-60 md:h-68 w-auto max-w-full object-cover rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500"
                 loading={activeSlide === 0 ? "eager" : "lazy"}
                 fetchPriority={activeSlide === 0 ? "high" : "auto"}
                 decoding="async"
-                width="400"
-                height="224"
               />
             </AnimatePresence>
           </div>
