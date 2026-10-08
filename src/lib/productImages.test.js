@@ -48,4 +48,9 @@ describe('productImages resolver', () => {
     const legacy = { name: 'iPhone 15 Pro Max', category: 'Mobiles', images: ['https://images.unsplash.com/photo-1'] };
     expect(getProductImage(legacy)).toContain('pexels-photo');
   });
+
+  it('reads image_url as returned by the cart and orders APIs', () => {
+    const cartItem = { product_id: 3, name: 'Apple AirPods Max - Silver', image_url: 'https://cdn.example.com/max.webp' };
+    expect(getProductImage(cartItem)).toBe('https://cdn.example.com/max.webp');
+  });
 });

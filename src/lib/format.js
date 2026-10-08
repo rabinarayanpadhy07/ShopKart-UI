@@ -8,3 +8,10 @@ export function formatPrice(value) {
 
 /** Orders above this amount ship free; mirrored in the header strip and product page. */
 export const FREE_DELIVERY_THRESHOLD = 499;
+
+/** Turns backend status codes like OUT_FOR_DELIVERY into "Out for delivery". */
+export function formatStatus(status) {
+  if (!status) return '';
+  const text = String(status).replace(/_/g, ' ').toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

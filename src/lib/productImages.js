@@ -250,6 +250,7 @@ function storedImages(product) {
   const list = Array.isArray(product.images) ? [...product.images] : [];
   if (product.image) list.push(product.image);
   if (product.imageUrl) list.push(product.imageUrl);
+  if (product.image_url) list.push(product.image_url); // cart & order APIs
   return list.filter((url) => !isPlaceholderOnly(url));
 }
 

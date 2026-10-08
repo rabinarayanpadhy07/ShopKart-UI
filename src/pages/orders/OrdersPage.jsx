@@ -12,6 +12,7 @@ import { IMAGE_FALLBACK } from '@/lib/placeholder';
 import { getProductImage } from '@/lib/productImages';
 import { getOrders, cancelOrder, returnOrder, submitReview } from '@/api/orders';
 
+import { formatStatus } from '@/lib/format';
 function formatOrderDate(value) {
   if (!value) return null;
   const date = new Date(value);
@@ -93,7 +94,7 @@ export default function OrdersPage() {
         )
       );
       setShowCancelModal(false);
-      toast.success("Order cancelled successfully.");
+      toast.success("Your order has been cancelled.");
     } catch (err) {
       toast.error(err.message || "Failed to cancel order");
     } finally {
@@ -114,7 +115,7 @@ export default function OrdersPage() {
         )
       );
       setShowReturnModal(false);
-      toast.success("Return requested successfully.");
+      toast.success("Return requested. We'll update you within 24 hours.");
     } catch (err) {
       toast.error(err.message || "Failed to submit return request");
     } finally {
@@ -128,7 +129,7 @@ export default function OrdersPage() {
     try {
       await submitReview(activeProductId, reviewRating, reviewComment);
       setShowReviewModal(false);
-      toast.success("Review submitted successfully.");
+      toast.success("Thanks for your review!");
     } catch (err) {
       toast.error(err.message || "Failed to submit review");
     } finally {
@@ -160,7 +161,7 @@ export default function OrdersPage() {
         {loading && (
           <div className="text-center py-10 text-ink-muted">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand mb-2"></div>
-            <p>Loading orders...</p>
+            <p>Loading your orders…</p>
           </div>
         )}
         {error && (
@@ -173,7 +174,7 @@ export default function OrdersPage() {
             <svg className="w-16 h-16 mx-auto text-border mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <p className="text-lg font-semibold">No orders found. Start shopping now!</p>
+            <p className="text-lg font-semibold">You haven't placed any orders yet.</p>
           </div>
         )}
         {!loading && !error && orders.length > 0 && (
@@ -208,7 +209,7 @@ export default function OrdersPage() {
                             )}
                           </div>
                           <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] || DEFAULT_STATUS_STYLE}`}>
-                            {order.status}
+                            {formatStatus(order.status)}
                           </span>
                         </div>
                       </CardHeader>
@@ -237,15 +238,15 @@ export default function OrdersPage() {
                               <p className="text-xs font-semibold text-amber-500">Return Reason: {order.return_reason}</p>
                             )}
                             {order.status === 'RETURN_APPROVED' && (
-                              <p className="text-xs font-semibold text-teal-600">Return Accepted (Refund/Exchange in process)</p>
+                              <p className="text-xs font-semibold text-teal-600">Return approved. Your refund is on its way.</p>
                             )}
                             {order.status === 'RETURN_REJECTED' && (
-                              <p className="text-xs font-semibold text-rose-600">Return Request Declined by Admin</p>
+                              <p className="text-xs font-semibold text-rose-600">Return request declined</p>
                             )}
 
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 text-xs sm:text-sm text-ink-muted">
                               <div>
-                                <p className="text-xs text-ink-muted/70">Price per Unit</p>
+                                <p className="text-xs text-ink-muted/70">Price each</p>
                                 <p className="font-semibold text-ink">₹{parseFloat(order.price_per_unit).toFixed(2)}</p>
                               </div>
                               <div>
@@ -317,16 +318,16 @@ export default function OrdersPage() {
               <h3 className="text-lg font-bold text-ink text-left border-b border-border pb-2">Cancel Order</h3>
               <form onSubmit={handleCancelSubmit} className="space-y-4 text-left">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-ink-muted">Select Cancellation Reason</label>
+                  <label className="text-xs font-semibold text-ink-muted">Why are you cancelling?</label>
                   <select
                     value={cancelReason}
                     onChange={e => setCancelReason(e.target.value)}
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
                   >
                     <option value="Changed my mind">Changed my mind</option>
-                    <option value="Found better price elsewhere">Found better price elsewhere</option>
-                    <option value="Shipping time was too long">Shipping time was too long</option>
-                    <option value="Wrong item ordered">Wrong item ordered</option>
+                    <option value="Found better price elsewhere">Found a better price elsewhere</option>
+                    <option value="Shipping time was too long">Delivery is taking too long</option>
+                    <option value="Wrong item ordered">Ordered the wrong item</option>
                   </select>
                 </div>
                 <div className="flex justify-end gap-3 pt-3 border-t border-border">
@@ -352,19 +353,19 @@ export default function OrdersPage() {
               variants={modalPanel}
               className="bg-surface rounded-xl max-w-md w-full p-6 space-y-4 border border-border shadow-2xl"
             >
-              <h3 className="text-lg font-bold text-ink text-left border-b border-border pb-2">Request Order Return</h3>
+              <h3 className="text-lg font-bold text-ink text-left border-b border-border pb-2">Return this order</h3>
               <form onSubmit={handleReturnSubmit} className="space-y-4 text-left">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-ink-muted">Select Return Reason</label>
+                  <label className="text-xs font-semibold text-ink-muted">Why are you returning it?</label>
                   <select
                     value={returnReason}
                     onChange={e => setReturnReason(e.target.value)}
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
                   >
-                    <option value="Defective product">Defective product / Doesn&apos;t work</option>
-                    <option value="Wrong size/item delivered">Wrong size/item delivered</option>
+                    <option value="Defective product">Defective or doesn&apos;t work</option>
+                    <option value="Wrong size/item delivered">Wrong item or size delivered</option>
                     <option value="Product not as described">Product not as described</option>
-                    <option value="Damaged packaging or item">Damaged packaging or item</option>
+                    <option value="Damaged packaging or item">Arrived damaged</option>
                   </select>
                 </div>
                 <div className="flex justify-end gap-3 pt-3 border-t border-border">
@@ -390,10 +391,10 @@ export default function OrdersPage() {
               variants={modalPanel}
               className="bg-surface rounded-xl max-w-md w-full p-6 space-y-4 border border-border shadow-2xl"
             >
-              <h3 className="text-lg font-bold text-ink text-left border-b border-border pb-2">Write Product Review</h3>
+              <h3 className="text-lg font-bold text-ink text-left border-b border-border pb-2">Write a review</h3>
               <form onSubmit={handleReviewSubmit} className="space-y-4 text-left">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-ink-muted">Rating (1 to 5 Stars)</label>
+                  <label className="text-xs font-semibold text-ink-muted">Your rating</label>
                   <div className="flex gap-2 text-2xl pt-1">
                     {[1, 2, 3, 4, 5].map(star => (
                       <motion.button
@@ -409,13 +410,13 @@ export default function OrdersPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-ink-muted">Review Comments</label>
+                  <label className="text-xs font-semibold text-ink-muted">Your review</label>
                   <textarea
                     value={reviewComment}
                     onChange={e => setReviewComment(e.target.value)}
                     rows="3"
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
-                    placeholder="Share your experience with this product..."
+                    placeholder="What did you like or dislike?"
                     required
                   />
                 </div>

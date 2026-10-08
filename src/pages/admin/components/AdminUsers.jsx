@@ -56,8 +56,8 @@ export function AdminUsers({
   return (
     <div className="space-y-6 text-left animate-fade-up">
       <div>
-        <h2 className="text-xl font-bold text-slate-800">Accounts Directory</h2>
-        <p className="text-xs text-slate-400">View user directories and manage staff roles.</p>
+        <h2 className="text-xl font-bold text-slate-800">All accounts</h2>
+        <p className="text-xs text-slate-400">View customers and manage admin access.</p>
       </div>
 
       {/* Filtering Toolbar */}
@@ -66,7 +66,7 @@ export function AdminUsers({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search accounts directory by Username, Email or ID..."
+            placeholder="Search by username, email or ID…"
             value={searchUserQuery}
             onChange={(e) => setSearchUserQuery(e.target.value)}
             className="text-xs h-10 pl-10"
@@ -76,7 +76,7 @@ export function AdminUsers({
 
       {/* Users Table */}
       {usersLoading ? (
-        <div className="text-center py-12 text-slate-500 italic">User index compiling...</div>
+        <div className="text-center py-12 text-slate-500 italic">Loading accounts…</div>
       ) : filteredUsers.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-400 italic">
           No accounts found matching search string.
@@ -89,9 +89,9 @@ export function AdminUsers({
                 <tr>
                   <th className="p-4">User ID</th>
                   <th className="p-4">Username</th>
-                  <th className="p-4">Email Address</th>
-                  <th className="p-4">Security Role</th>
-                  <th className="p-4">Creation Date</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Role</th>
+                  <th className="p-4">Joined</th>
                   <th className="p-4 text-center">Actions</th>
                 </tr>
               </thead>
@@ -146,7 +146,7 @@ export function AdminUsers({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-slate-800 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-              <h3 className="text-base font-bold text-slate-900">User Account Details</h3>
+              <h3 className="text-base font-bold text-slate-900">Account details</h3>
               <button
                 onClick={() => setInspectingUser(null)}
                 className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
@@ -213,7 +213,7 @@ export function AdminUsers({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Security Role</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Role</label>
                 <select
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
