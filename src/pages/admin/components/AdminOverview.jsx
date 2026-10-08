@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { formatStatus } from "@/lib/format";
 import {
   ShoppingBag,
   Package,
@@ -42,7 +43,7 @@ export function AdminOverview({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card className="hover:shadow-md transition-shadow border-slate-200 bg-white p-5 flex items-center justify-between text-left">
           <div className="space-y-1">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Overall Business Sales</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total revenue</p>
             {overallLoading ? (
               <p className="text-xl font-bold animate-pulse">...</p>
             ) : (
@@ -61,7 +62,7 @@ export function AdminOverview({
 
         <Card className="hover:shadow-md transition-shadow border-slate-155 bg-white p-5 flex items-center justify-between text-left">
           <div className="space-y-1">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Orders Logged</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Orders</p>
             <p className="text-2xl font-black text-slate-900">{orders.length}</p>
             <span className="text-[10px] text-blue-600 font-semibold">
               {pendingOrdersCount} pending fulfillment
@@ -74,7 +75,7 @@ export function AdminOverview({
 
         <Card className="hover:shadow-md transition-shadow border-slate-155 bg-white p-5 flex items-center justify-between text-left">
           <div className="space-y-1">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Inventory Catalog Size</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Products</p>
             <p className="text-2xl font-black text-slate-900">{productsList.length}</p>
             <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" /> {lowStockProducts.length} low stock warnings
@@ -87,7 +88,7 @@ export function AdminOverview({
 
         <Card className="hover:shadow-md transition-shadow border-slate-155 bg-white p-5 flex items-center justify-between text-left">
           <div className="space-y-1">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Registered Accounts</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Customers</p>
             <p className="text-2xl font-black text-slate-900">{usersList.length}</p>
             <span className="text-[10px] text-indigo-600 font-semibold">
               {usersList.filter((u) => u.role === "ADMIN").length} Administrator roles
@@ -107,14 +108,14 @@ export function AdminOverview({
             <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" /> Inventory Stock Alerts
             </CardTitle>
-            <CardDescription className="text-[11px]">List of items with low units.</CardDescription>
+            <CardDescription className="text-[11px]">Products with 10 or fewer units left.</CardDescription>
           </CardHeader>
           <CardContent className="p-4 flex-grow max-h-72 overflow-y-auto space-y-3">
             {lowStockProducts.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-10 space-y-2 text-slate-400">
                 <CheckCircle className="h-10 w-10 text-emerald-500" />
-                <p className="text-xs font-semibold text-slate-600">Fully Stocked!</p>
-                <p className="text-[10px]">No low stock products logged currently.</p>
+                <p className="text-xs font-semibold text-slate-600">All stocked up</p>
+                <p className="text-[10px]">No products are running low.</p>
               </div>
             ) : (
               lowStockProducts.map((p) => (
@@ -144,11 +145,11 @@ export function AdminOverview({
             <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-brand" /> Recent Incoming Orders
             </CardTitle>
-            <CardDescription className="text-[11px]">Audit trail of the 5 most recent checkout orders.</CardDescription>
+            <CardDescription className="text-[11px]">Your 5 most recent orders.</CardDescription>
           </CardHeader>
           <CardContent className="p-4 flex-grow divide-y divide-slate-100 max-h-72 overflow-y-auto">
             {recentOrders.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400 italic">No order history recorded.</div>
+              <div className="py-12 text-center text-xs text-slate-400 italic">No orders yet.</div>
             ) : (
               recentOrders.map((order) => (
                 <div key={order.orderId} className="flex flex-col gap-2 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
@@ -167,7 +168,7 @@ export function AdminOverview({
                           : "bg-blue-50 text-blue-700 border-blue-200"
                       }`}
                     >
-                      {order.status}
+                      {formatStatus(order.status)}
                     </span>
                     <Button
                       size="sm"
@@ -188,8 +189,8 @@ export function AdminOverview({
       {/* Administrative Control Grid */}
       <Card className="border-slate-200 bg-white text-left p-5 shadow-xs">
         <div className="mb-4">
-          <h3 className="text-sm font-bold text-slate-800">Administrative Actions</h3>
-          <p className="text-xs text-slate-400">Quick shortcuts to execute administrative operations across the system.</p>
+          <h3 className="text-sm font-bold text-slate-800">Quick actions</h3>
+          <p className="text-xs text-slate-400">Jump straight to common tasks.</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
@@ -200,7 +201,7 @@ export function AdminOverview({
               <Plus className="h-4 w-4" />
             </div>
             <p className="text-xs font-bold text-slate-800">New Product</p>
-            <p className="text-[10px] text-slate-400">Add an item to the catalog</p>
+            <p className="text-[10px] text-slate-400">List a new item in your catalog</p>
           </button>
 
           <button
@@ -210,8 +211,8 @@ export function AdminOverview({
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
               <ShoppingBag className="h-4 w-4" />
             </div>
-            <p className="text-xs font-bold text-slate-800">Manage Orders</p>
-            <p className="text-[10px] text-slate-400">View and update shipments</p>
+            <p className="text-xs font-bold text-slate-800">Manage orders</p>
+            <p className="text-[10px] text-slate-400">Update shipping and delivery status</p>
           </button>
 
           <button
@@ -222,7 +223,7 @@ export function AdminOverview({
               <Layers className="h-4 w-4" />
             </div>
             <p className="text-xs font-bold text-slate-800">Categories</p>
-            <p className="text-[10px] text-slate-400">Create product taxonomies</p>
+            <p className="text-[10px] text-slate-400">Organise how products are grouped</p>
           </button>
 
           <button
@@ -232,8 +233,8 @@ export function AdminOverview({
             <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
               <DollarSign className="h-4 w-4" />
             </div>
-            <p className="text-xs font-bold text-slate-800">Sales Reports</p>
-            <p className="text-[10px] text-slate-400">Daily, monthly & yearly audits</p>
+            <p className="text-xs font-bold text-slate-800">Sales reports</p>
+            <p className="text-[10px] text-slate-400">Daily, monthly and yearly revenue</p>
           </button>
         </div>
       </Card>

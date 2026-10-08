@@ -49,11 +49,11 @@ export function AdminFinance({
         <Card className="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden border border-slate-800">
           <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-brand/10 rounded-full blur-2xl"></div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cumulative Value</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">All-time revenue</p>
             <p className="text-[10px] text-slate-400 font-medium italic">(Since database initiation)</p>
           </div>
           {overallLoading ? (
-            <p className="text-xl font-bold mt-4 animate-pulse">Running metrics...</p>
+            <p className="text-xl font-bold mt-4 animate-pulse">Calculating…</p>
           ) : (
             <p className="text-3xl font-black text-brand mt-4">
               ₹{overallStats?.totalBusiness !== undefined ? parseFloat(overallStats.totalBusiness).toFixed(2) : "0.00"}
@@ -63,9 +63,9 @@ export function AdminFinance({
 
         {/* Category Sales Breakdown */}
         <Card className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs md:col-span-2 text-left">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Overall Category Sales Distribution</h3>
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Revenue by category</h3>
           {overallLoading ? (
-            <p className="text-xs text-slate-400 italic">Calculating categories...</p>
+            <p className="text-xs text-slate-400 italic">Calculating…</p>
           ) : overallStats?.categorySales && Object.keys(overallStats.categorySales).length > 0 ? (
             <div className="flex flex-wrap gap-2.5">
               {Object.entries(overallStats.categorySales).map(([cat, val]) => (
@@ -76,7 +76,7 @@ export function AdminFinance({
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">No checkout categories indexed.</p>
+            <p className="text-xs text-slate-400 italic">No sales yet.</p>
           )}
         </Card>
       </div>
@@ -86,13 +86,13 @@ export function AdminFinance({
         {/* Report Form */}
         <Card className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs text-left space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-slate-800">Generate Audit Report</h3>
-            <p className="text-xs text-slate-400">Select parameters to query billing database.</p>
+            <h3 className="text-sm font-bold text-slate-800">Sales report</h3>
+            <p className="text-xs text-slate-400">Pick a period to see revenue and top categories.</p>
           </div>
 
           <form onSubmit={fetchCustomFinancialReport} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase">Audit Interval</label>
+              <label className="text-xs font-bold text-slate-700 uppercase">Period</label>
               <div className="flex gap-2">
                 {["daily", "monthly", "yearly"].map((type) => (
                   <button
@@ -116,21 +116,21 @@ export function AdminFinance({
 
             {financialReportType === "daily" && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 uppercase">Select Target Date</label>
+                <label className="text-xs font-bold text-slate-700 uppercase">Date</label>
                 <Input type="date" id="date" name="date" required className="text-xs h-10" />
               </div>
             )}
 
             {financialReportType === "monthly" && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 uppercase">Select Month & Year</label>
+                <label className="text-xs font-bold text-slate-700 uppercase">Month and year</label>
                 <Input type="month" id="monthYear" name="monthYear" required className="text-xs h-10" />
               </div>
             )}
 
             {financialReportType === "yearly" && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 uppercase">Select Target Year</label>
+                <label className="text-xs font-bold text-slate-700 uppercase">Year</label>
                 <select
                   id="year"
                   name="year"
@@ -155,15 +155,15 @@ export function AdminFinance({
         {/* Audit calculation results */}
         <Card className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs text-left lg:col-span-2 flex flex-col justify-between min-h-[300px]">
           <div>
-            <h3 className="text-sm font-bold text-slate-800">Audit Calculation Results</h3>
-            <p className="text-xs text-slate-400">Values generated from specific query parameters.</p>
+            <h3 className="text-sm font-bold text-slate-800">Results</h3>
+            <p className="text-xs text-slate-400">Revenue for the selected period.</p>
           </div>
 
           <div className="flex-grow flex flex-col justify-center py-4">
             {financialLoading ? (
-              <div className="text-center text-slate-400 animate-pulse text-xs italic">Auditing database records...</div>
+              <div className="text-center text-slate-400 animate-pulse text-xs italic">Calculating…</div>
             ) : !customReportData ? (
-              <div className="text-center text-slate-400 text-xs italic">Select scope parameters and run query.</div>
+              <div className="text-center text-slate-400 text-xs italic">Choose a period and run the report.</div>
             ) : customReportData.error ? (
               <div className="bg-red-50 text-red-700 text-xs p-3 rounded-xl border border-red-150 text-center font-medium">
                 {customReportData.error}
@@ -171,14 +171,14 @@ export function AdminFinance({
             ) : (
               <div className="space-y-6">
                 <div className="bg-slate-50 rounded-2xl p-5 flex justify-between items-center border border-slate-200">
-                  <span className="text-xs font-bold text-slate-600">Sum Business Value</span>
+                  <span className="text-xs font-bold text-slate-600">Revenue</span>
                   <span className="text-2xl font-black text-slate-900">
                     ₹{customReportData.totalBusiness !== undefined ? parseFloat(customReportData.totalBusiness).toFixed(2) : "0.00"}
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-2">Category Sales breakdown:</h4>
+                  <h4 className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-2">By category</h4>
                   {customReportData.categorySales && Object.keys(customReportData.categorySales).length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-40 overflow-y-auto pr-1">
                       {Object.entries(customReportData.categorySales).map(([cat, val]) => (

@@ -124,7 +124,7 @@ export default function AddressManagement() {
       <Header cartCount={cartCount} username={username} />
       <main className="flex-grow max-w-4xl mx-auto w-full py-10 px-4">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-extrabold text-slate-800">Your Delivery Addresses</h1>
+          <h1 className="text-3xl font-extrabold text-slate-800">Your addresses</h1>
           {!showForm && (
             <Button onClick={handleOpenAdd} className="font-bold text-xs" size="sm">
               + Add New Address
@@ -156,7 +156,7 @@ export default function AddressManagement() {
                   </div>
                 </div>
                 <div className="space-y-1 text-left">
-                  <label className="text-xs font-semibold text-slate-600">Street Address</label>
+                  <label className="text-xs font-semibold text-slate-600">Street address</label>
                   <Input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} required />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -193,12 +193,12 @@ export default function AddressManagement() {
         )}
 
         {loading && (
-          <div className="text-center py-10 text-slate-500">Loading addresses...</div>
+          <div className="text-center py-10 text-slate-500">Loading addresses…</div>
         )}
 
         {!loading && !showForm && addresses.length === 0 && (
           <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-gray-200 p-8 shadow-xs">
-            <p className="text-lg font-semibold">No addresses saved. Please add an address to proceed with orders.</p>
+            <p className="text-lg font-semibold">You haven't saved an address yet. Add one to check out faster.</p>
           </div>
         )}
 

@@ -73,11 +73,11 @@ export default function WishlistPage() {
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans w-full">
       <Header cartCount={cartCount} username={username} />
       <main className="flex-grow max-w-7xl mx-auto w-full py-10 px-4 md:px-8">
-        <h1 className="text-3xl font-extrabold text-slate-800 mb-6">Your Wishlist</h1>
+        <h1 className="text-3xl font-extrabold text-slate-800 mb-6">Your wishlist</h1>
         {loading && (
           <div className="text-center py-10 text-slate-500">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand mb-2"></div>
-            <p>Loading wishlist...</p>
+            <p>Loading your wishlist…</p>
           </div>
         )}
         {error && (

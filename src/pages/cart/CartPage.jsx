@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Minus, Plus, ShoppingBag, MapPin, Sparkles, Truck } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, MapPin, Truck, ArrowLeft, ShieldCheck } from "lucide-react";
 import { StoreLayout } from "@/components/layout/StoreLayout";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { IMAGE_FALLBACK } from "@/lib/placeholder";
 import { getProductImage } from "@/lib/productImages";
+import { formatPrice, FREE_DELIVERY_THRESHOLD } from "@/lib/format";
 import { getCartItems, removeCartItem, updateCartItem } from "@/api/cart";
 import { getAddresses } from "@/api/addresses";
 import { request } from "@/api/client";
@@ -32,6 +32,9 @@ const loadRazorpay = () => {
   });
 };
 
+// Flat delivery fee below the free-delivery threshold (mirrors PaymentController).
+const DELIVERY_FEE = 370;
+
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [username, setUsername] = useState("");
@@ -41,6 +44,7 @@ const CartPage = () => {
   // Address states
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [paying, setPaying] = useState(false);
   const toast = useToast();
 
   const fetchCartItems = async () => {
@@ -81,21 +85,24 @@ const CartPage = () => {
 
   // Remove item from the cart
   const handleRemoveItem = async (productId) => {
+    const removed = cartItems.find((item) => item.product_id === productId);
     try {
       await removeCartItem(productId);
       setCartItems((prevItems) => prevItems.filter((item) => item.product_id !== productId));
+      toast.info(removed ? `Removed ${removed.name}` : "Item removed");
     } catch (error) {
       console.error("Error removing item:", error);
+      toast.error(error.message || "Couldn't remove this item. Please try again.");
     }
   };
 
   // Update quantity of an item
   const handleQuantityChange = async (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      handleRemoveItem(productId);
+      return;
+    }
     try {
-      if (newQuantity <= 0) {
-        handleRemoveItem(productId);
-        return;
-      }
       await updateCartItem(productId, newQuantity);
       setCartItems((prevItems) =>
         prevItems.map((item) =>
@@ -110,26 +117,31 @@ const CartPage = () => {
       );
     } catch (error) {
       console.error("Error updating quantity:", error);
+      toast.error(error.message || "Couldn't update the quantity. Please try again.");
     }
   };
 
-  const subtotal = cartItems
-    .reduce((total, item) => total + parseFloat(item.total_price), 0)
-    .toFixed(2);
+  const subtotal = cartItems.reduce((total, item) => total + parseFloat(item.total_price), 0);
+  const itemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  // Must match PaymentController: a flat delivery fee applies below the free-delivery threshold.
+  const shipping = itemCount > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+  const grandTotal = subtotal + shipping;
+  const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
 
   // Razorpay integration for payment
   const handleCheckout = async () => {
     if (!selectedAddressId) {
-      toast.error("Please select a delivery address first!");
+      toast.error("Choose a delivery address to continue.");
       return;
     }
 
     const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
     if (!razorpayKeyId || razorpayKeyId.startsWith("your-razorpay")) {
-      toast.error("Payments aren't configured yet. Set VITE_RAZORPAY_KEY_ID to enable checkout.");
+      toast.error("Online payments aren't set up yet. Set VITE_RAZORPAY_KEY_ID to enable checkout.");
       return;
     }
 
+    setPaying(true);
     try {
       await loadRazorpay();
 
@@ -148,7 +160,7 @@ const CartPage = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         currency: "INR",
         name: "ShopKart",
-        description: "Order Payment",
+        description: `Order of ${itemCount} item${itemCount === 1 ? "" : "s"}`,
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
@@ -162,13 +174,14 @@ const CartPage = () => {
               parse: "text",
             });
             apiCache.invalidate("cart");
-            toast.success("Payment verified successfully!");
+            toast.success("Payment received. Your order is confirmed!");
             navigate("/orders");
           } catch (error) {
             console.error("Error verifying payment:", error);
-            toast.error("Payment verification failed. Please try again.");
+            toast.error("We couldn't verify your payment. If money was deducted, it will be refunded automatically.");
           }
         },
+        modal: { ondismiss: () => setPaying(false) },
         prefill: {
           name: username,
         },
@@ -178,251 +191,237 @@ const CartPage = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      toast.error("Payment failed. Please try again: " + error.message);
+      toast.error(`Checkout couldn't start: ${error.message}`);
       console.error("Error during checkout:", error);
+      setPaying(false);
     }
   };
 
-  const totalProducts = () => cartItems.reduce((acc, item) => acc + item.quantity, 0);
-
-  const shipping = (totalProducts() > 0 && parseFloat(subtotal) < 499) ? (5.0 * 74).toFixed(2) : "0.00"; // Free delivery above 499
-
   return (
-    <StoreLayout cartCount={totalProducts()} username={username} mainClassName="flex-grow max-w-7xl mx-auto w-full py-8 px-4 md:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="flex flex-col lg:flex-row gap-8"
-        >
-          <div className="flex-grow lg:w-2/3 space-y-6">
-            <Card className="bg-surface border border-border shadow-sm rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-border bg-muted-bg/50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-brand-light">
-                    <ShoppingBag className="h-5 w-5 text-brand" strokeWidth={2} />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold text-ink">Shopping Cart</CardTitle>
-                    <CardDescription>
-                      {cartItems.length} item{cartItems.length === 1 ? "" : "s"} in your cart
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                {loading ? (
-                  <div className="space-y-4 animate-pulse">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-5 bg-muted-bg/60 rounded-2xl p-4">
-                        <div className="h-24 w-24 rounded-xl bg-border/60 shrink-0" />
-                        <div className="flex-grow space-y-2">
-                          <div className="h-4 w-2/5 rounded bg-border/60" />
-                          <div className="h-3 w-3/5 rounded bg-border/40" />
-                          <div className="h-3 w-1/5 rounded bg-border/40" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : cartItems.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="p-5 rounded-full bg-muted-bg inline-flex mb-4">
-                      <ShoppingBag className="w-10 h-10 text-ink-muted/60" strokeWidth={1.5} />
-                    </div>
-                    <p className="text-lg font-semibold mb-2 text-ink">Your cart is empty</p>
-                    <p className="text-sm text-ink-muted mb-4">Add some products to get started</p>
-                    <Button onClick={() => navigate("/")} size="sm">
-                      Start Shopping
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <AnimatePresence initial={false}>
-                    {cartItems.map((item) => (
-                      <motion.div
-                        key={item.product_id}
-                        layout
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -24, transition: { duration: 0.2 } }}
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                        className="relative flex flex-col sm:flex-row items-center gap-5 bg-surface border border-border rounded-2xl p-4 sm:p-5 hover:shadow-md hover:border-brand-muted/50 transition-all"
+    <StoreLayout cartCount={itemCount} username={username} mainClassName="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-ink md:text-3xl">Your cart</h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            {loading ? "Loading your items…" : itemCount === 0 ? "No items yet" : `${itemCount} item${itemCount === 1 ? "" : "s"} · ${formatPrice(subtotal)}`}
+          </p>
+        </div>
+        {cartItems.length > 0 && (
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline">
+            <ArrowLeft className="h-4 w-4" /> Continue shopping
+          </Link>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="space-y-3 animate-pulse" aria-hidden="true">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex gap-4 rounded-2xl border border-border bg-surface p-4">
+              <div className="h-24 w-24 shrink-0 rounded-xl bg-muted-bg sm:h-28 sm:w-28" />
+              <div className="flex-grow space-y-2 pt-1">
+                <div className="h-4 w-2/5 rounded bg-muted-bg" />
+                <div className="h-3 w-3/5 rounded bg-muted-bg" />
+                <div className="h-8 w-28 rounded-xl bg-muted-bg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : cartItems.length === 0 ? (
+        <div className="flex flex-col items-center rounded-3xl border border-dashed border-border bg-surface px-6 py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted-bg">
+            <ShoppingBag className="h-8 w-8 text-ink-muted" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-lg font-semibold text-ink">Your cart is empty</h2>
+          <p className="mt-1 max-w-sm text-sm text-ink-muted">
+            Browse phones, laptops, fashion and more. Items you add will show up here.
+          </p>
+          <Button onClick={() => navigate("/")} className="mt-5">
+            Start shopping
+          </Button>
+        </div>
+      ) : (
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="min-w-0 space-y-6">
+            {/* Items */}
+            <section aria-label="Cart items" className="overflow-hidden rounded-2xl border border-border bg-surface">
+              <ul className="divide-y divide-border">
+                <AnimatePresence initial={false}>
+                  {cartItems.map((item) => (
+                    <motion.li
+                      key={item.product_id}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -24, transition: { duration: 0.2 } }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                      className="flex gap-4 p-4 sm:gap-5 sm:p-5"
+                    >
+                      <Link
+                        to={`/product/${item.product_id}`}
+                        className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted-bg/70 sm:h-28 sm:w-28"
+                        tabIndex={-1}
+                        aria-hidden="true"
                       >
                         <img
                           src={getProductImage(item)}
-                          alt={item.name}
-                          onClick={() => navigate(`/product/${item.product_id}`)}
-                          className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-contain p-2 bg-muted-bg border border-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
-                          onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-contain p-2 mix-blend-multiply transition-transform duration-300 hover:scale-105"
+                          onError={(e) => { e.currentTarget.src = IMAGE_FALLBACK; }}
                         />
-                        <div className="flex-grow min-w-0 text-center sm:text-left space-y-1.5">
-                          <h3
-                            onClick={() => navigate(`/product/${item.product_id}`)}
-                            className="text-base font-bold text-ink line-clamp-1 cursor-pointer hover:text-brand transition-colors"
+                      </Link>
+
+                      <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 space-y-1">
+                          <Link
+                            to={`/product/${item.product_id}`}
+                            className="line-clamp-2 text-sm font-semibold leading-snug text-ink hover:text-brand sm:text-base"
                           >
                             {item.name}
-                          </h3>
-                          <p className="text-xs text-ink-muted line-clamp-2 max-w-md">{item.description}</p>
-                          <div className="flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
-                            <span className="text-sm font-bold text-brand">₹{parseFloat(item.price_per_unit).toFixed(2)}</span>
-                            <span className="text-xs text-ink-muted">per unit</span>
-                          </div>
+                          </Link>
+                          {item.description && (
+                            <p className="line-clamp-1 text-xs text-ink-muted sm:max-w-md">{item.description}</p>
+                          )}
+                          <p className="text-xs text-ink-muted">
+                            {formatPrice(item.price_per_unit)} each
+                          </p>
                         </div>
 
-                        <div className="flex items-center justify-between gap-5 w-full sm:w-auto pt-3 sm:pt-0 mt-1 sm:mt-0 border-t sm:border-t-0 border-border sm:flex-col sm:items-end">
-                          <div className="flex items-center border border-border rounded-xl overflow-hidden bg-muted-bg p-1">
+                        <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-start">
+                          <p className="order-2 text-base font-bold text-ink sm:order-1 sm:text-lg">{formatPrice(item.total_price)}</p>
+                          <div className="order-1 flex items-center gap-2 sm:order-2">
+                            <div className="flex items-center rounded-xl border border-border">
+                              <button
+                                type="button"
+                                onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
+                                className="flex h-8 w-8 items-center justify-center text-ink-muted hover:text-ink cursor-pointer"
+                                aria-label={`Decrease quantity of ${item.name}`}
+                              >
+                                <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                              </button>
+                              <span className="w-8 text-center text-sm font-semibold text-ink" aria-live="polite">{item.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
+                                className="flex h-8 w-8 items-center justify-center text-ink-muted hover:text-ink cursor-pointer"
+                                aria-label={`Increase quantity of ${item.name}`}
+                              >
+                                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                              </button>
+                            </div>
                             <button
-                              onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
-                              className="px-2.5 py-1.5 hover:bg-surface rounded-lg text-ink transition-colors cursor-pointer"
-                              aria-label="Decrease quantity"
-                            >
-                              <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                            </button>
-                            <span className="px-3 py-1.5 text-sm font-black text-ink min-w-[2.25rem] text-center">{item.quantity}</span>
-                            <button
-                              onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
-                              className="px-2.5 py-1.5 hover:bg-surface rounded-lg text-ink transition-colors cursor-pointer"
-                              aria-label="Increase quantity"
-                            >
-                              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                            </button>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-extrabold text-ink">₹{parseFloat(item.total_price).toFixed(2)}</span>
-                            <button
-                              className="text-ink-muted hover:text-danger hover:bg-red-50 p-2 rounded-xl transition-all cursor-pointer"
+                              type="button"
+                              className="flex h-8 w-8 items-center justify-center rounded-xl text-ink-muted transition-colors hover:bg-red-50 hover:text-danger cursor-pointer"
                               onClick={() => handleRemoveItem(item.product_id)}
-                              title="Remove item"
-                              aria-label="Remove item"
+                              aria-label={`Remove ${item.name} from cart`}
+                              title="Remove"
                             >
                               <Trash2 className="h-4 w-4" strokeWidth={2} />
                             </button>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      </div>
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
+              </ul>
+            </section>
 
-            {/* Delivery Address Selector */}
-            {cartItems.length > 0 && (
-              <Card className="bg-surface border border-border shadow-sm rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-border flex flex-row items-center justify-between bg-muted-bg/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-brand-light">
-                      <MapPin className="h-5 w-5 text-brand" strokeWidth={2} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-bold text-ink">Delivery Address</CardTitle>
-                      <CardDescription>Where should we ship your order?</CardDescription>
-                    </div>
-                  </div>
-                  <Button onClick={() => navigate("/addresses")} variant="outline" size="sm" className="text-xs font-bold">
-                    Manage Addresses
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {addresses.length === 0 ? (
-                    <div className="text-center py-6 border border-dashed border-border rounded-lg bg-muted-bg text-sm">
-                      <p className="text-ink-muted mb-2 font-medium">No saved addresses found</p>
-                      <Button onClick={() => navigate("/addresses")} size="sm" className="font-bold text-xs">
-                        Add Shipping Address
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-60 overflow-y-auto overscroll-contain pr-1">
-                      {addresses.map((addr) => (
-                        <label
-                          key={addr.id}
-                          className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer select-none transition-all ${
-                            selectedAddressId === addr.id
-                              ? 'border-brand bg-brand-light/50 shadow-sm'
-                              : 'border-border hover:bg-muted-bg hover:border-ink-muted/30'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="deliveryAddress"
-                            checked={selectedAddressId === addr.id}
-                            onChange={() => setSelectedAddressId(addr.id)}
-                            className="mt-1 h-4 w-4 border-border text-brand focus:ring-brand/30"
-                          />
-                          <div className="text-left space-y-0.5 text-sm">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-ink">{addr.fullName}</span>
-                              {addr.default && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-brand-light text-brand">
-                                  Default
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-ink-muted">{addr.streetAddress}, {addr.city}, {addr.state} - {addr.zipCode}</p>
-                            <p className="text-[10px] text-ink-muted/70">Phone: {addr.phoneNumber}</p>
+            {/* Delivery address */}
+            <section aria-labelledby="address-heading" className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <MapPin className="h-5 w-5 text-brand" strokeWidth={2} />
+                  <h2 id="address-heading" className="text-base font-bold text-ink">Delivery address</h2>
+                </div>
+                <Button onClick={() => navigate("/addresses")} variant="outline" size="sm">
+                  {addresses.length === 0 ? "Add address" : "Manage"}
+                </Button>
+              </div>
+              {addresses.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-border bg-muted-bg/50 p-4 text-sm text-ink-muted">
+                  You haven't saved an address yet. Add one to see delivery options and check out.
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {addresses.map((addr) => {
+                    const selected = selectedAddressId === addr.id;
+                    return (
+                      <label
+                        key={addr.id}
+                        className={`flex cursor-pointer select-none items-start gap-3 rounded-xl border p-3.5 transition-colors ${
+                          selected ? "border-brand bg-brand-light/60" : "border-border hover:bg-muted-bg/60"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="deliveryAddress"
+                          checked={selected}
+                          onChange={() => setSelectedAddressId(addr.id)}
+                          className="mt-1 h-4 w-4 accent-brand"
+                        />
+                        <div className="min-w-0 space-y-0.5 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-ink">{addr.fullName}</span>
+                            {addr.default && (
+                              <span className="rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-semibold text-brand">Default</span>
+                            )}
                           </div>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                          <p className="text-xs leading-relaxed text-ink-muted">
+                            {addr.streetAddress}, {addr.city}, {addr.state} {addr.zipCode}
+                          </p>
+                          <p className="text-xs text-ink-muted">{addr.phoneNumber}</p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </div>
 
-          {/* Checkout Card */}
-          {cartItems.length > 0 && (
-            <div className="w-full lg:w-1/3">
-              <Card className="bg-surface border border-border shadow-sm rounded-2xl sticky top-28 overflow-hidden">
-                <CardHeader className="border-b border-border bg-muted-bg/50">
-                  <CardTitle className="text-lg font-bold text-ink">Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex justify-between items-center text-sm text-ink-muted">
-                    <span>Subtotal</span>
-                    <span className="font-semibold text-ink">₹{subtotal}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-ink-muted">
-                    <span className="flex items-center gap-1.5">
-                      <Truck className="h-3.5 w-3.5" strokeWidth={2} />
-                      Shipping
-                    </span>
-                    <span className="font-semibold text-ink">
-                      {shipping === "0.00" ? <span className="text-success">FREE</span> : `₹${shipping}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-ink-muted">
-                    <span>Total Products</span>
-                    <span className="font-semibold text-ink">{totalProducts()}</span>
-                  </div>
-                  {shipping !== "0.00" && (
-                    <div className="flex items-start gap-2 bg-brand-light/60 text-brand text-xs font-medium rounded-lg p-2.5">
-                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" strokeWidth={2} />
-                      <span>Add ₹{(499 - parseFloat(subtotal)).toFixed(2)} more to unlock free delivery</span>
-                    </div>
-                  )}
-                  <div className="border-t border-border pt-4 flex justify-between items-center">
-                    <span className="text-base font-bold text-ink">Grand Total</span>
-                    <span className="text-2xl font-extrabold text-ink">
-                      ₹{(parseFloat(subtotal) + parseFloat(shipping)).toFixed(2)}
-                    </span>
-                  </div>
-                </CardContent>
-                <CardFooter className="p-6 pt-0">
-                  <Button 
-                    onClick={handleCheckout} 
-                    className="w-full font-bold text-sm h-11"
-                    variant="default"
-                  >
-                    Proceed to Checkout
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          )}
-        </motion.div>
+          {/* Summary */}
+          <aside aria-labelledby="summary-heading" className="rounded-2xl border border-border bg-surface p-5 lg:sticky lg:top-28">
+            <h2 id="summary-heading" className="text-base font-bold text-ink">Order summary</h2>
+
+            {shipping > 0 && (
+              <div className="mt-4 rounded-xl bg-brand-light/70 p-3">
+                <p className="text-xs font-medium text-ink">
+                  Add <span className="font-bold text-brand">{formatPrice(FREE_DELIVERY_THRESHOLD - subtotal)}</span> more for free delivery
+                </p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
+                  <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${freeDeliveryProgress}%` }} />
+                </div>
+              </div>
+            )}
+
+            <dl className="mt-4 space-y-2.5 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Items ({itemCount})</dt>
+                <dd className="font-medium text-ink">{formatPrice(subtotal)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="flex items-center gap-1.5 text-ink-muted">
+                  <Truck className="h-3.5 w-3.5" strokeWidth={2} /> Delivery
+                </dt>
+                <dd className="font-medium">{shipping === 0 ? <span className="text-success">Free</span> : formatPrice(shipping)}</dd>
+              </div>
+              <div className="flex items-baseline justify-between border-t border-border pt-3">
+                <dt className="font-semibold text-ink">Total</dt>
+                <dd className="text-2xl font-extrabold text-ink">{formatPrice(grandTotal)}</dd>
+              </div>
+              <p className="text-right text-[11px] text-ink-muted">Inclusive of all taxes</p>
+            </dl>
+
+            <Button onClick={handleCheckout} disabled={paying} size="lg" className="mt-4 w-full">
+              {paying ? "Opening payment…" : `Pay ${formatPrice(grandTotal)}`}
+            </Button>
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ink-muted">
+              <ShieldCheck className="h-3.5 w-3.5 text-success" /> Secure payment via Razorpay
+            </p>
+          </aside>
+        </div>
+      )}
     </StoreLayout>
   );
 };

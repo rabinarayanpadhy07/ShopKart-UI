@@ -149,7 +149,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
 
   const handleCartClick = () => {
     if (!username || username === 'Guest') {
-      toast.info("Please sign up or sign in to view your cart!");
+      toast.info("Sign in to view your cart.");
       navigate('/login');
     } else {
       navigate('/cart');
@@ -230,7 +230,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
             <div className="relative flex w-full rounded-xl border border-border focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15 transition-all">
               <input
                 type="text"
-                placeholder="Search for products, brands and more..."
+                placeholder="Search for products, brands and more…"
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -307,7 +307,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
             <div className="flex rounded-xl overflow-hidden border border-border">
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search products…"
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import { ProductCard } from './ProductCard';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatStatus } from '@/lib/format';
 
 const base = {
   product_id: 7,
@@ -28,6 +28,14 @@ describe('formatPrice', () => {
   it('uses Indian digit grouping', () => {
     expect(formatPrice(139999)).toBe('₹1,39,999');
     expect(formatPrice('499.00')).toBe('₹499');
+  });
+});
+
+describe('formatStatus', () => {
+  it('turns backend status codes into readable labels', () => {
+    expect(formatStatus('OUT_FOR_DELIVERY')).toBe('Out for delivery');
+    expect(formatStatus('DELIVERED')).toBe('Delivered');
+    expect(formatStatus(null)).toBe('');
   });
 });
 

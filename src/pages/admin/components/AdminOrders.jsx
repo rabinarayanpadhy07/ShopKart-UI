@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { updateOrderStatus, getOrderHistory } from "@/api/admin";
 
+import { formatStatus } from "@/lib/format";
 export function AdminOrders({
   orders = [],
   ordersLoading = false,
@@ -106,7 +107,7 @@ export function AdminOrders({
           <p className="text-2xl font-black text-slate-900 mt-0.5">{orders.length}</p>
         </div>
         <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 shadow-xs">
-          <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Pending Fulfillment</p>
+          <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Awaiting fulfilment</p>
           <p className="text-2xl font-black text-amber-800 mt-0.5">
             {orders.filter((o) =>
               ["PENDING", "SUCCESS", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status)
@@ -114,7 +115,7 @@ export function AdminOrders({
           </p>
         </div>
         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-xs">
-          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Delivered Orders</p>
+          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Delivered</p>
           <p className="text-2xl font-black text-emerald-800 mt-0.5">
             {orders.filter((o) => o.status === "DELIVERED").length}
           </p>
@@ -135,7 +136,7 @@ export function AdminOrders({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search order list by ID or User ID..."
+            placeholder="Search by order ID or customer ID…"
             value={searchOrder}
             onChange={(e) => setSearchOrder(e.target.value)}
             className="text-xs h-10 pl-10"
@@ -147,23 +148,23 @@ export function AdminOrders({
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
           >
-            <option value="">All Statuses</option>
-            <option value="PENDING">PENDING</option>
-            <option value="PROCESSING">PROCESSING</option>
-            <option value="SHIPPED">SHIPPED</option>
-            <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
-            <option value="DELIVERED">DELIVERED</option>
-            <option value="CANCELLED">CANCELLED</option>
-            <option value="RETURN_REQUESTED">RETURN_REQUESTED</option>
-            <option value="RETURN_APPROVED">RETURN_APPROVED</option>
-            <option value="RETURN_REJECTED">RETURN_REJECTED</option>
+            <option value="">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="RETURN_REQUESTED">Return requested</option>
+            <option value="RETURN_APPROVED">Return approved</option>
+            <option value="RETURN_REJECTED">Return rejected</option>
           </select>
         </div>
       </div>
 
       {/* Orders Table */}
       {ordersLoading ? (
-        <div className="text-center py-12 text-slate-500 italic">Audit trail loading...</div>
+        <div className="text-center py-12 text-slate-500 italic">Loading orders…</div>
       ) : filteredOrders.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-400 italic">
           No orders match current query parameters.
@@ -174,11 +175,11 @@ export function AdminOrders({
             <table className="w-full text-left text-sm text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="p-4">Order Reference</th>
-                  <th className="p-4">Customer Account</th>
+                  <th className="p-4">Order</th>
+                  <th className="p-4">Customer</th>
                   <th className="p-4">Total Amount</th>
-                  <th className="p-4">Workflow Status</th>
-                  <th className="p-4">Transaction Date</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Date</th>
                   <th className="p-4 text-center">Actions</th>
                 </tr>
               </thead>
@@ -208,7 +209,7 @@ export function AdminOrders({
                             : "bg-blue-50 text-blue-700 border-blue-200"
                         }`}
                       >
-                        {order.status}
+                        {formatStatus(order.status)}
                       </span>
                     </td>
                     <td className="p-4 text-xs text-slate-400 font-semibold">
@@ -258,7 +259,7 @@ export function AdminOrders({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left: Items list & total */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ordered Products</h4>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items</h4>
                   <div className="space-y-2.5 max-h-60 overflow-y-auto pr-2">
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       selectedOrder.items.map((item, idx) => (
@@ -271,11 +272,11 @@ export function AdminOrders({
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-slate-400 italic">No line items detailed.</p>
+                      <p className="text-xs text-slate-400 italic">No items on this order.</p>
                     )}
                   </div>
                   <div className="mt-3 flex justify-between items-center bg-slate-100 p-3 rounded-xl border border-slate-200">
-                    <span className="text-xs font-bold text-slate-600">Total Invoice Sum</span>
+                    <span className="text-xs font-bold text-slate-600">Order total</span>
                     <span className="text-base font-black text-slate-900">₹{parseFloat(selectedOrder.totalAmount).toFixed(2)}</span>
                   </div>
                 </div>
@@ -312,32 +313,32 @@ export function AdminOrders({
 
                   <form onSubmit={handleStatusTransitionSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Update Workflow Status</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Update status</label>
                       <select
                         value={transitionStatus}
                         onChange={(e) => setTransitionStatus(e.target.value)}
                         className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                       >
-                        <option value="PENDING">PENDING</option>
-                        <option value="CONFIRMED">CONFIRMED</option>
-                        <option value="PROCESSING">PROCESSING</option>
-                        <option value="SHIPPED">SHIPPED</option>
-                        <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
-                        <option value="DELIVERED">DELIVERED</option>
-                        <option value="CANCELLED">CANCELLED</option>
-                        <option value="RETURN_APPROVED">RETURN_APPROVED</option>
-                        <option value="RETURN_REJECTED">RETURN_REJECTED</option>
-                        <option value="ITEM_PICKED_UP">ITEM_PICKED_UP</option>
-                        <option value="RETURNED">RETURNED</option>
-                        <option value="REFUNDED">REFUNDED</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="PROCESSING">Processing</option>
+                        <option value="SHIPPED">Shipped</option>
+                        <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                        <option value="RETURN_APPROVED">Return approved</option>
+                        <option value="RETURN_REJECTED">Return rejected</option>
+                        <option value="ITEM_PICKED_UP">Item picked up</option>
+                        <option value="RETURNED">Returned</option>
+                        <option value="REFUNDED">Refunded</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Administrative Remarks / Comments</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Note for the customer (optional)</label>
                       <Input
                         type="text"
-                        placeholder="e.g. Dispatched via courier tracking #12345"
+                        placeholder="e.g. Shipped with Delhivery, tracking #12345"
                         value={transitionComments}
                         onChange={(e) => setTransitionComments(e.target.value)}
                         className="text-xs h-9"
@@ -351,17 +352,17 @@ export function AdminOrders({
 
                   {/* Audit History Log */}
                   <div className="pt-2">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Audit History</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Status history</h4>
                     {historyLoading ? (
-                      <p className="text-xs text-slate-400 italic">Loading timeline...</p>
+                      <p className="text-xs text-slate-400 italic">Loading history…</p>
                     ) : orderHistory.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic">No transition logs.</p>
+                      <p className="text-xs text-slate-400 italic">No status changes yet.</p>
                     ) : (
                       <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                         {orderHistory.map((h, i) => (
                           <div key={i} className="text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg">
                             <div className="flex justify-between font-semibold">
-                              <span className="text-slate-800 font-bold">{h.status}</span>
+                              <span className="text-slate-800 font-bold">{formatStatus(h.status)}</span>
                               <span className="text-[10px] text-slate-400">{new Date(h.changedAt).toLocaleString()}</span>
                             </div>
                             {h.comments && <p className="text-[11px] text-slate-600 mt-0.5">&quot;{h.comments}&quot;</p>}
