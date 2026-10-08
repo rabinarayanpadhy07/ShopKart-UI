@@ -15,10 +15,15 @@ export function ProfileDropdown({ username }) {
   ];
 
   const handleLogout = async () => {
+    setIsOpen(false);
     try {
       await logout();
+    } catch (e) {
+      // The server may already consider an expired token logged out.
+      console.error('Logout request failed:', e);
+    } finally {
       navigate('/');
-    } catch (e) { console.error(e); }
+    }
   };
 
   return (
@@ -51,7 +56,7 @@ export function ProfileDropdown({ username }) {
               </button>
             ))}
             <div className="border-t border-border my-1" />
-            <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors cursor-pointer text-left">
+            <button type="button" onClick={handleLogout} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors cursor-pointer text-left">
               <LogOut className="h-4 w-4" strokeWidth={2} />
               Logout
             </button>

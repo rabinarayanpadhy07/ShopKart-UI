@@ -8,6 +8,7 @@ import Logo from '@/components/layout/Logo';
 import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 import { useToast } from '@/components/ui/Toast';
 import { IMAGE_FALLBACK } from '@/lib/placeholder';
+import { getProductImage } from '@/lib/productImages';
 
 export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSearch = "" }) {
   const navigate = useNavigate();
@@ -175,13 +176,16 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => applySearch(item.name)}
+                onClick={() => {
+                  setShowSuggestions(false);
+                  navigate(`/products/${item.product_id}`);
+                }}
                 className="w-full text-left px-3 py-2.5 hover:bg-muted-bg flex items-center gap-3 cursor-pointer"
               >
                 <img
-                  src={item.image || IMAGE_FALLBACK}
+                  src={getProductImage(item)}
                   alt=""
-                  className="h-10 w-10 rounded-lg object-cover bg-muted-bg shrink-0 border border-border"
+                  className="h-10 w-10 rounded-lg object-contain bg-muted-bg shrink-0 border border-border p-0.5"
                   loading="lazy"
                   onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                 />
@@ -206,7 +210,9 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
     <header className="sticky top-0 z-50 bg-surface border-b border-border">
       <div className="hidden sm:block bg-ink text-white/80 text-xs">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-1.5 flex items-center justify-between">
-          <span>Free delivery on orders above ₹499</span>
+          <span className="flex items-center gap-1.5 font-medium">
+            <span className="text-amber-400 font-bold">⚡ Special Offer:</span> Free Express Delivery on orders above ₹499 • 100% Genuine Guaranteed
+          </span>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3 w-3 text-brand-muted" strokeWidth={2} />

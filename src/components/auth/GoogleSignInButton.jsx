@@ -3,21 +3,27 @@ import { googleLogin } from '@/api/auth';
 
 const GSI_SCRIPT_ID = 'google-gsi-script';
 const GSI_SRC = 'https://accounts.google.com/gsi/client';
+let googleScriptPromise;
 
 function loadGoogleScript() {
   if (window.google?.accounts?.id) {
     return Promise.resolve();
   }
 
+  if (googleScriptPromise) {
+    return googleScriptPromise;
+  }
+
   const existing = document.getElementById(GSI_SCRIPT_ID);
   if (existing) {
-    return new Promise((resolve, reject) => {
+    googleScriptPromise = new Promise((resolve, reject) => {
       existing.addEventListener('load', () => resolve(), { once: true });
       existing.addEventListener('error', () => reject(new Error('Failed to load Google Sign-In')), { once: true });
     });
+    return googleScriptPromise;
   }
 
-  return new Promise((resolve, reject) => {
+  googleScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.id = GSI_SCRIPT_ID;
     script.src = GSI_SRC;
@@ -27,6 +33,7 @@ function loadGoogleScript() {
     script.onerror = () => reject(new Error('Failed to load Google Sign-In'));
     document.head.appendChild(script);
   });
+  return googleScriptPromise;
 }
 
 export function GoogleSignInButton({
@@ -37,20 +44,25 @@ export function GoogleSignInButton({
   expectedRole,
 }) {
   const buttonRef = useRef(null);
+  const callbacksRef = useRef({ onSuccess, onError, onStart });
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const configured = Boolean(clientId && String(clientId).includes('.apps.googleusercontent.com'));
+
+  useEffect(() => {
+    callbacksRef.current = { onSuccess, onError, onStart };
+  }, [onSuccess, onError, onStart]);
 
   useEffect(() => {
     if (!configured) return undefined;
     let cancelled = false;
 
     const handleCredential = async (response) => {
-      onStart?.();
+      callbacksRef.current.onStart?.();
       try {
         const data = await googleLogin(response.credential, expectedRole);
-        if (!cancelled) onSuccess?.(data);
+        if (!cancelled) callbacksRef.current.onSuccess?.(data);
       } catch (error) {
-        if (!cancelled) onError?.(error.message || 'Google Sign-In failed');
+        if (!cancelled) callbacksRef.current.onError?.(error.message || 'Google Sign-In failed');
       }
     };
 
@@ -71,13 +83,13 @@ export function GoogleSignInButton({
     };
 
     loadGoogleScript().then(render).catch((error) => {
-      if (!cancelled) onError?.(error.message);
+      if (!cancelled) callbacksRef.current.onError?.(error.message);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [configured, clientId, text, expectedRole, onSuccess, onError, onStart]);
+  }, [configured, clientId, text, expectedRole]);
 
   return (
     <div className="mt-4 space-y-3">

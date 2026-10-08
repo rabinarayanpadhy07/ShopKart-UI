@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { IMAGE_FALLBACK } from "@/lib/placeholder";
 import { formatPrice } from "@/lib/format";
+import { getProductImage } from "@/lib/productImages";
 import { getProducts } from "@/api/products";
 import { addAdminProduct, modifyAdminProduct, deleteAdminProduct } from "@/api/admin";
 
@@ -225,7 +226,6 @@ export function AdminProducts({
               </thead>
               <tbody className="divide-y divide-border">
                 {products.map((p) => {
-                  const firstImage = p.images && p.images[0] ? p.images[0] : "";
                   return (
                     <tr key={p.product_id} className="transition-colors hover:bg-muted-bg/40">
                       <td className="px-4 py-3">
@@ -248,6 +248,17 @@ export function AdminProducts({
                             </p>
                           </div>
                         </div>
+                    <tr key={p.product_id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="p-4">
+                        <img
+                          src={getProductImage(p)}
+                          alt={p.name}
+                          className="h-10 w-10 rounded-lg object-contain p-1 bg-slate-50 border border-slate-150"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.src = IMAGE_FALLBACK;
+                          }}
+                        />
                       </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-muted-bg px-2.5 py-1 text-xs font-medium text-ink">{p.category || "Uncategorized"}</span>

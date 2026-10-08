@@ -47,7 +47,7 @@ export default function RegistrationPage() {
       await register({ username, email, password });
       setSuccessMessage('Account created! Redirecting to sign in…');
       setStatus('success');
-      window.setTimeout(() => navigate('/login'), 280);
+      navigate('/login');
     } catch (err) {
       fail(err.message);
     }
