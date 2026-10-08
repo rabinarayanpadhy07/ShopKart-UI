@@ -251,13 +251,13 @@ const CartPage = () => {
                         <img
                           src={getProductImage(item)}
                           alt={item.name}
-                          onClick={() => navigate(`/products/${item.product_id}`)}
+                          onClick={() => navigate(`/product/${item.product_id}`)}
                           className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-contain p-2 bg-muted-bg border border-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
                           onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                         />
                         <div className="flex-grow min-w-0 text-center sm:text-left space-y-1.5">
                           <h3
-                            onClick={() => navigate(`/products/${item.product_id}`)}
+                            onClick={() => navigate(`/product/${item.product_id}`)}
                             className="text-base font-bold text-ink line-clamp-1 cursor-pointer hover:text-brand transition-colors"
                           >
                             {item.name}

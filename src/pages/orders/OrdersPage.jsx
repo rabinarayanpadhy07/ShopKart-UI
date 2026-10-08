@@ -217,13 +217,13 @@ export default function OrdersPage() {
                           <img
                             src={getProductImage(order)}
                             alt={order.name}
-                            onClick={() => order.product_id && navigate(`/products/${order.product_id}`)}
+                            onClick={() => order.product_id && navigate(`/product/${order.product_id}`)}
                             className={`h-24 w-24 rounded-lg object-contain p-1.5 bg-muted-bg border border-border ${order.product_id ? 'cursor-pointer hover:opacity-90' : ''}`}
                             onError={(e) => { e.target.src = IMAGE_FALLBACK; }}
                           />
                           <div className="flex-grow text-center sm:text-left space-y-1">
                             <h3
-                              onClick={() => order.product_id && navigate(`/products/${order.product_id}`)}
+                              onClick={() => order.product_id && navigate(`/product/${order.product_id}`)}
                               className={`text-xl font-bold text-ink ${order.product_id ? 'cursor-pointer hover:text-brand transition-colors' : ''}`}
                             >
                               {order.name}

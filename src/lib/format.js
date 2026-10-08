@@ -8,7 +8,3 @@ export function formatPrice(value) {
 
 /** Orders above this amount ship free; mirrored in the header strip and product page. */
 export const FREE_DELIVERY_THRESHOLD = 499;
-
-export function productImage(product) {
-  return product?.images?.[0] || product?.image || null;
-}

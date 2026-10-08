@@ -178,7 +178,7 @@ export function Header({ cartCount = 0, username = 'Guest', onSearch, initialSea
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setShowSuggestions(false);
-                  navigate(`/products/${item.product_id}`);
+                  navigate(`/product/${item.product_id}`);
                 }}
                 className="w-full text-left px-3 py-2.5 hover:bg-muted-bg flex items-center gap-3 cursor-pointer"
               >

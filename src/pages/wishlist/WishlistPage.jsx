@@ -135,7 +135,7 @@ export default function WishlistPage() {
 
                   {/* Image Container */}
                   <div
-                    onClick={() => navigate(`/products/${product.productId}`)}
+                    onClick={() => navigate(`/product/${product.productId}`)}
                     className="relative aspect-square bg-slate-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-4 cursor-pointer"
                   >
                     <img
@@ -161,7 +161,7 @@ export default function WishlistPage() {
                     </div>
 
                     <h3
-                      onClick={() => navigate(`/products/${product.productId}`)}
+                      onClick={() => navigate(`/product/${product.productId}`)}
                       className="text-sm font-bold text-slate-800 line-clamp-2 leading-relaxed min-h-[40px] cursor-pointer hover:text-brand transition-colors"
                     >
                       {product.name}

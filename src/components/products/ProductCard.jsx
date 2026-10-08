@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Star, ShoppingBag, Check } from 'lucide-react';
 import { IMAGE_FALLBACK } from '@/lib/placeholder';
-import { formatPrice, productImage, FREE_DELIVERY_THRESHOLD } from '@/lib/format';
+import { formatPrice, FREE_DELIVERY_THRESHOLD } from '@/lib/format';
+import { getProductImage } from '@/lib/productImages';
 import { cn } from '@/lib/utils';
 
 export function RatingBadge({ rating, count, className }) {
@@ -45,7 +46,7 @@ export const ProductCard = React.memo(function ProductCard({
   onAddToWishlist,
 }) {
   const id = product.product_id;
-  const image = productImage(product) || IMAGE_FALLBACK;
+  const image = getProductImage(product) || IMAGE_FALLBACK;
   const price = Number(product.price);
   const outOfStock = product.stock <= 0;
   const label = product.brand || product.category;

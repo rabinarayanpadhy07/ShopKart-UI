@@ -33,4 +33,19 @@ describe('productImages resolver', () => {
     expect(img).toBeDefined();
     expect(typeof img).toBe('string');
   });
+
+  it('prefers the images stored on the product over the curated map', () => {
+    const seeded = {
+      name: 'Atomic Habits',
+      category: 'Books',
+      images: ['https://cdn.example.com/atomic-habits.jpg', 'https://cdn.example.com/back.jpg'],
+    };
+    expect(getProductImage(seeded)).toBe('https://cdn.example.com/atomic-habits.jpg');
+    expect(getProductImages(seeded)).toEqual(seeded.images);
+  });
+
+  it('replaces legacy unsplash demo photos with curated assets', () => {
+    const legacy = { name: 'iPhone 15 Pro Max', category: 'Mobiles', images: ['https://images.unsplash.com/photo-1'] };
+    expect(getProductImage(legacy)).toContain('pexels-photo');
+  });
 });

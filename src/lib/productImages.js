@@ -240,36 +240,43 @@ export function isUnsplashOrPlaceholder(url) {
   );
 }
 
+function isPlaceholderOnly(url) {
+  if (!url || typeof url !== 'string') return true;
+  return url.trim() === '' || url.includes('via.placeholder') || url.includes('placeholder.com');
+}
+
+/** Images stored on the product itself (seeded or set by an admin), in order. */
+function storedImages(product) {
+  const list = Array.isArray(product.images) ? [...product.images] : [];
+  if (product.image) list.push(product.image);
+  if (product.imageUrl) list.push(product.imageUrl);
+  return list.filter((url) => !isPlaceholderOnly(url));
+}
+
 /**
- * Resolves the primary authentic product image for a product object.
+ * The product's stored images are authoritative. The curated asset map only fills in
+ * for legacy demo rows (which still point at old, often-broken Unsplash photos) and
+ * for products that have no image at all.
+ */
+function legacyAssets(product, stored) {
+  const curated = REAL_PRODUCT_ASSETS[(product.name || '').trim().toLowerCase()];
+  if (!curated) return null;
+  if (stored.length === 0 || stored.every((url) => url.includes('unsplash.com'))) return curated;
+  return null;
+}
+
+/**
+ * Resolves the primary product image for a product object.
  */
 export function getProductImage(product) {
   if (!product) return CATEGORY_FALLBACK_IMAGES.Default;
 
-  const nameKey = (product.name || '').trim().toLowerCase();
-  if (REAL_PRODUCT_ASSETS[nameKey]) {
-    return REAL_PRODUCT_ASSETS[nameKey].primary;
-  }
+  const stored = storedImages(product);
+  const curated = legacyAssets(product, stored);
+  if (curated) return curated.primary;
+  if (stored.length > 0) return stored[0];
 
-  // Check if first image is valid and NOT an unsplash/broken link
-  if (Array.isArray(product.images) && product.images.length > 0) {
-    const candidate = product.images[0];
-    if (candidate && !isUnsplashOrPlaceholder(candidate)) {
-      return candidate;
-    }
-  }
-
-  if (product.imageUrl && !isUnsplashOrPlaceholder(product.imageUrl)) {
-    return product.imageUrl;
-  }
-
-  // Fallback by category
-  const cat = product.category || '';
-  if (CATEGORY_FALLBACK_IMAGES[cat]) {
-    return CATEGORY_FALLBACK_IMAGES[cat];
-  }
-
-  return CATEGORY_FALLBACK_IMAGES.Default;
+  return CATEGORY_FALLBACK_IMAGES[product.category] || CATEGORY_FALLBACK_IMAGES.Default;
 }
 
 /**
@@ -278,20 +285,10 @@ export function getProductImage(product) {
 export function getProductImages(product) {
   if (!product) return [CATEGORY_FALLBACK_IMAGES.Default];
 
-  const nameKey = (product.name || '').trim().toLowerCase();
-  if (REAL_PRODUCT_ASSETS[nameKey]?.gallery?.length) {
-    return REAL_PRODUCT_ASSETS[nameKey].gallery;
-  }
+  const stored = storedImages(product);
+  const curated = legacyAssets(product, stored);
+  if (curated?.gallery?.length) return curated.gallery;
+  if (stored.length > 0) return stored;
 
-  // Check backend provided images
-  const validImages = (product.images || [])
-    .filter(img => img && !isUnsplashOrPlaceholder(img));
-
-  if (validImages.length > 0) {
-    return validImages;
-  }
-
-  // Default to primary resolved image
-  const primary = getProductImage(product);
-  return [primary];
+  return [getProductImage(product)];
 }

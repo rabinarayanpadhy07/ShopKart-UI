@@ -231,7 +231,7 @@ export function AdminProducts({
                       <td className="px-4 py-3">
                         <div className="flex min-w-[240px] items-center gap-3">
                           <img
-                            src={firstImage || IMAGE_FALLBACK}
+                            src={getProductImage(p)}
                             alt=""
                             className="h-11 w-11 shrink-0 rounded-xl border border-border bg-muted-bg object-contain p-1"
                             loading="lazy"
@@ -248,17 +248,6 @@ export function AdminProducts({
                             </p>
                           </div>
                         </div>
-                    <tr key={p.product_id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-4">
-                        <img
-                          src={getProductImage(p)}
-                          alt={p.name}
-                          className="h-10 w-10 rounded-lg object-contain p-1 bg-slate-50 border border-slate-150"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.src = IMAGE_FALLBACK;
-                          }}
-                        />
                       </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-muted-bg px-2.5 py-1 text-xs font-medium text-ink">{p.category || "Uncategorized"}</span>

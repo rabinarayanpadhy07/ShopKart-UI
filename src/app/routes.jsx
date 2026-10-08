@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import HomePage from '@/pages/HomePage';
 
 // Route-level code splitting for non-storefront and administrative pages
@@ -12,7 +12,6 @@ const OrdersPage = lazy(() => import('@/pages/orders/OrdersPage'));
 const WishlistPage = lazy(() => import('@/pages/wishlist/WishlistPage'));
 const AddressesPage = lazy(() => import('@/pages/account/AddressesPage'));
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
-const ProductDetailPage = lazy(() => import('@/pages/product/ProductDetailPage'));
 
 function RouteLoadingFallback() {
   return (
@@ -25,6 +24,12 @@ function RouteLoadingFallback() {
   );
 }
 
+// Older links used /products/:id; keep them working.
+function LegacyProductRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/product/${id}`} replace />;
+}
+
 export default function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoadingFallback />}>
@@ -32,9 +37,7 @@ export default function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/product/:productId" element={<ProductPage />} />
 
-        <Route path="/products/:id" element={<ProductDetailPage />} />
-        <Route path="/product/:id" element={<ProductDetailPage />} />
- main
+        <Route path="/products/:id" element={<LegacyProductRedirect />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />
