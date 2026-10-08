@@ -61,7 +61,7 @@ export function AdminUsers({
       </div>
 
       {/* Filtering Toolbar */}
-      <div className="flex bg-white border border-slate-205 p-4 rounded-2xl shadow-xs">
+      <div className="flex bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
         <div className="flex-grow relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -78,11 +78,11 @@ export function AdminUsers({
       {usersLoading ? (
         <div className="text-center py-12 text-slate-500 italic">User index compiling...</div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white border border-slate-205 rounded-2xl p-10 text-center text-slate-400 italic">
+        <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-400 italic">
           No accounts found matching search string.
         </div>
       ) : (
-        <div className="bg-white border border-slate-205 rounded-2xl overflow-hidden shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -128,7 +128,7 @@ export function AdminUsers({
                         onClick={() => openEditModal(u)}
                         variant="secondary"
                         size="sm"
-                        className="text-[10px] font-bold h-8 cursor-pointer bg-slate-850 text-white hover:bg-slate-700"
+                        className="text-[10px] font-bold h-8 cursor-pointer bg-slate-800 text-white hover:bg-slate-700"
                       >
                         Edit Role
                       </Button>
@@ -145,7 +145,7 @@ export function AdminUsers({
       {inspectingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-slate-800 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-150 pb-3">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <h3 className="text-base font-bold text-slate-900">User Account Details</h3>
               <button
                 onClick={() => setInspectingUser(null)}
@@ -179,7 +179,7 @@ export function AdminUsers({
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-slate-800 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-150 pb-3">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <h3 className="text-base font-bold text-slate-900">Modify User #{editingUser.userId}</h3>
               <button
                 onClick={() => setEditingUser(null)}
@@ -217,7 +217,7 @@ export function AdminUsers({
                 <select
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
-                  className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   <option value="CUSTOMER">CUSTOMER</option>
                   <option value="ADMIN">ADMIN</option>

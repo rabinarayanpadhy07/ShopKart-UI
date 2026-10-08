@@ -85,7 +85,7 @@ export default function WishlistPage() {
           </div>
         )}
         {!loading && !error && wishlistItems.length === 0 && (
-          <div className="text-center py-20 text-slate-500 bg-white rounded-xl border border-gray-150 p-8 shadow-xs">
+          <div className="text-center py-20 text-slate-500 bg-white rounded-xl border border-gray-200 p-8 shadow-xs">
             <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>

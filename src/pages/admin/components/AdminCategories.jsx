@@ -45,7 +45,7 @@ export function AdminCategories({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Add Category Form */}
-        <Card className="border-slate-205 bg-white p-5 shadow-xs h-fit">
+        <Card className="border-slate-200 bg-white p-5 shadow-xs h-fit">
           <h3 className="text-sm font-bold text-slate-800 mb-1">Add Product Category</h3>
           <p className="text-xs text-slate-400 mb-4">Input values to register a new directory type.</p>
 
@@ -72,7 +72,7 @@ export function AdminCategories({
         </Card>
 
         {/* Categories List */}
-        <Card className="lg:col-span-2 border-slate-205 bg-white p-5 shadow-xs">
+        <Card className="lg:col-span-2 border-slate-200 bg-white p-5 shadow-xs">
           <h3 className="text-sm font-bold text-slate-800 mb-1">Configured Categories</h3>
           <p className="text-xs text-slate-400 mb-4">Active product directory mappings.</p>
 
@@ -81,9 +81,9 @@ export function AdminCategories({
           ) : categoriesList.length === 0 ? (
             <div className="text-center py-10 text-slate-400 italic">No categories found in the database.</div>
           ) : (
-            <div className="overflow-hidden border border-slate-150 rounded-xl">
+            <div className="overflow-hidden border border-slate-200 rounded-xl">
               <table className="w-full text-left text-sm text-slate-700">
-                <thead className="bg-slate-50 border-b border-slate-150 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   <tr>
                     <th className="p-3">Category ID</th>
                     <th className="p-3">Category Name</th>

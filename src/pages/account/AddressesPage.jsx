@@ -197,7 +197,7 @@ export default function AddressManagement() {
         )}
 
         {!loading && !showForm && addresses.length === 0 && (
-          <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-gray-150 p-8 shadow-xs">
+          <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-gray-200 p-8 shadow-xs">
             <p className="text-lg font-semibold">No addresses saved. Please add an address to proceed with orders.</p>
           </div>
         )}

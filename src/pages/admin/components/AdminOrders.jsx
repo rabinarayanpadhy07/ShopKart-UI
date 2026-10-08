@@ -101,7 +101,7 @@ export function AdminOrders({
     <div className="space-y-6 text-left animate-fade-up">
       {/* Order summary stats bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Orders</p>
           <p className="text-2xl font-black text-slate-900 mt-0.5">{orders.length}</p>
         </div>
@@ -145,7 +145,7 @@ export function AdminOrders({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
+            className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
           >
             <option value="">All Statuses</option>
             <option value="PENDING">PENDING</option>
@@ -237,7 +237,7 @@ export function AdminOrders({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 text-slate-800">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-150 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <FileText className="h-5 w-5 text-brand" />
@@ -262,7 +262,7 @@ export function AdminOrders({
                   <div className="space-y-2.5 max-h-60 overflow-y-auto pr-2">
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       selectedOrder.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-150 rounded-xl text-xs">
+                        <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
                           <div>
                             <p className="font-bold text-slate-800">{item.productName || `Product ID: ${item.productId}`}</p>
                             <p className="text-[11px] text-slate-500">Qty: {item.quantity} × ₹{parseFloat(item.pricePerUnit).toFixed(2)}</p>
@@ -281,7 +281,7 @@ export function AdminOrders({
                 </div>
 
                 {/* Right: Status Update Form */}
-                <div className="space-y-4 border-t md:border-t-0 md:border-l border-slate-150 pt-4 md:pt-0 md:pl-6">
+                <div className="space-y-4 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-6">
                   {selectedOrder.status === "RETURN_REQUESTED" && (
                     <div className="p-3.5 bg-amber-50/50 border border-amber-200 rounded-xl space-y-2 text-left">
                       <div className="flex items-center gap-1.5 font-bold text-xs text-amber-700">
@@ -316,7 +316,7 @@ export function AdminOrders({
                       <select
                         value={transitionStatus}
                         onChange={(e) => setTransitionStatus(e.target.value)}
-                        className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                       >
                         <option value="PENDING">PENDING</option>
                         <option value="CONFIRMED">CONFIRMED</option>
@@ -359,7 +359,7 @@ export function AdminOrders({
                     ) : (
                       <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                         {orderHistory.map((h, i) => (
-                          <div key={i} className="text-xs p-2 bg-slate-50 border border-slate-150 rounded-lg">
+                          <div key={i} className="text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg">
                             <div className="flex justify-between font-semibold">
                               <span className="text-slate-800 font-bold">{h.status}</span>
                               <span className="text-[10px] text-slate-400">{new Date(h.changedAt).toLocaleString()}</span>

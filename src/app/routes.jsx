@@ -6,6 +6,7 @@ import HomePage from '@/pages/HomePage';
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const AdminLoginPage = lazy(() => import('@/pages/auth/AdminLoginPage'));
+const ProductPage = lazy(() => import('@/pages/product/ProductPage'));
 const CartPage = lazy(() => import('@/pages/cart/CartPage'));
 const OrdersPage = lazy(() => import('@/pages/orders/OrdersPage'));
 const WishlistPage = lazy(() => import('@/pages/wishlist/WishlistPage'));
@@ -28,6 +29,7 @@ export default function AppRoutes() {
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/product/:productId" element={<ProductPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />

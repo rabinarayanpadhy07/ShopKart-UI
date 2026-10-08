@@ -1,197 +1,90 @@
-import React, { useState } from 'react';
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Send
-} from 'lucide-react';
-import Logo from '@/components/layout/Logo';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { useToast } from '@/components/ui/Toast';
+import Logo from '@/components/layout/Logo';
+
+const SHOP_LINKS = [
+  { label: 'Mobiles', to: '/?category=Mobiles' },
+  { label: 'Laptops', to: '/?category=Laptops' },
+  { label: 'Fashion', to: '/?category=Shirts' },
+  { label: 'Beauty', to: '/?category=Beauty' },
+  { label: 'Books', to: '/?category=Books' },
+];
+
+const HELP_LINKS = [
+  { label: 'Track order', to: '/orders' },
+  { label: 'Returns', to: '/orders' },
+  { label: 'Wishlist', to: '/wishlist' },
+  { label: 'Addresses', to: '/addresses' },
+];
+
+const SOCIALS = [
+  {
+    label: 'Instagram',
+    href: 'https://instagram.com',
+    path: 'M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95C23.73 2.7 21.31.27 16.95.07 15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-11.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z',
+  },
+  {
+    label: 'X',
+    href: 'https://x.com',
+    path: 'M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.65l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z',
+  },
+  {
+    label: 'YouTube',
+    href: 'https://youtube.com',
+    path: 'M23.5 6.16a3 3 0 00-2.11-2.11C19.52 3.55 12 3.55 12 3.55s-7.52 0-9.39.5A3 3 0 00.5 6.16C0 8.03 0 12 0 12s0 3.97.5 5.84a3 3 0 002.11 2.11c1.87.5 9.39.5 9.39.5s7.52 0 9.39-.5a3 3 0 002.11-2.11C24 15.97 24 12 24 12s0-3.97-.5-5.84zM9.55 15.57V8.43L15.82 12l-6.27 3.57z',
+  },
+];
+
+function LinkGroup({ title, links }) {
+  return (
+    <div>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">{title}</p>
+      <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px]">
+        {links.map((l) => (
+          <li key={l.label}>
+            <Link to={l.to} className="text-white/70 transition-colors hover:text-white">
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function Footer() {
-  const [email, setEmail] = useState('');
-  const toast = useToast();
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    toast.success(`Thank you for subscribing with: ${email}`);
-    setEmail('');
-  };
-
   return (
-    <footer className="bg-[#0B1517] border-t border-teal-950 text-slate-400 mt-auto font-sans">
-      {/* Main Directory */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-9">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
-          {/* Brand Info & Social Links */}
-          <div className="space-y-3.5">
-            <Logo size="large" variant="light" />
-            <p className="text-xs leading-relaxed text-slate-500 max-w-xs">
-              Gadgets, fashion and lifestyle essentials, delivered fast with easy 7-day returns.
+    <footer className="mt-auto bg-ink text-white/60">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-xs space-y-2">
+            <Logo variant="light" />
+            <p className="text-[13px] leading-relaxed text-white/50">
+              Genuine brands, secure payments and easy 7-day returns.
             </p>
-
-            {/* Social Links using Inline SVGs for version safety */}
-            <div className="flex items-center gap-2.5">
-              {/* Facebook */}
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-slate-400 hover:text-white hover:bg-brand hover:border-brand transition-all duration-300"
-              >
-                <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-                </svg>
-              </a>
-
-              {/* Twitter / X */}
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-slate-400 hover:text-white hover:bg-brand hover:border-brand transition-all duration-300"
-              >
-                <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </a>
-
-              {/* Instagram */}
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-slate-400 hover:text-white hover:bg-brand hover:border-brand transition-all duration-300"
-              >
-                <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0-3.584.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                </svg>
-              </a>
-
-              {/* Youtube */}
-              <a 
-                href="https://youtube.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-slate-400 hover:text-white hover:bg-brand hover:border-brand transition-all duration-300"
-              >
-                <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M23.498 6.163a3.003 3.003 0 00-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.507a3.003 3.003 0 00-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 002.11 2.11c1.87.507 9.388.507 9.388.507s7.518 0 9.388-.507a3.003 3.003 0 002.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </a>
-            </div>
           </div>
-
-          {/* Catalog Categories */}
-          <div>
-            <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3 relative after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:h-0.5 after:w-6 after:bg-brand">
-              Shop Categories
-            </h4>
-            <ul className="space-y-2 text-xs">
-              {[
-                { label: 'Shirts & Tops', path: '/?search=shirt' },
-                { label: 'Pants & Jeans', path: '/?search=pants' },
-                { label: 'Smartphones', path: '/?search=mobile' },
-                { label: 'Mobile Accessories', path: '/?search=charger' },
-                { label: 'Lifestyle Accessories', path: '/?search=wallet' },
-                { label: 'Beauty & Skincare', path: '/?search=cream' },
-                { label: 'Books & Literature', path: '/?search=habits' }
-              ].map(item => (
-                <li key={item.label}>
-                  <Link to={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Customer Care */}
-          <div>
-            <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3 relative after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:h-0.5 after:w-6 after:bg-brand">
-              Customer Care
-            </h4>
-            <ul className="space-y-2 text-xs">
-              {[
-                { label: 'Track Order', path: '/orders' },
-                { label: 'Shipping Policy', path: '#' },
-                { label: 'Returns & Refund', path: '/orders' },
-                { label: 'Secure Payments', path: '#' },
-                { label: 'Help & FAQ', path: '#' },
-                { label: 'Privacy Policy', path: '#' },
-                { label: 'Terms of Service', path: '#' }
-              ].map(item => (
-                <li key={item.label}>
-                  {item.path.startsWith('/') ? (
-                    <Link to={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <a href={item.path} className="hover:text-white hover:translate-x-1.5 transition-all duration-300 inline-block">
-                      {item.label}
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact & Newsletter Subscription */}
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3 relative after:content-[''] after:absolute after:left-0 after:bottom-[-6px] after:h-0.5 after:w-6 after:bg-brand">
-                Newsletter
-              </h4>
-              <p className="text-xs text-slate-500 leading-relaxed mb-2.5">
-                Sales updates and vouchers, straight to your inbox.
-              </p>
-
-              <form onSubmit={handleSubscribe} className="flex rounded-lg overflow-hidden border border-white/5 bg-white/[0.02] focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 transition-all p-1">
-                <input
-                  type="email"
-                  placeholder="Enter email..."
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="flex-1 bg-transparent px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none"
-                  required
-                />
-                <button type="submit" className="bg-brand hover:bg-brand-hover text-white px-3.5 rounded-md flex items-center justify-center transition-colors cursor-pointer">
-                  <Send className="h-3.5 w-3.5" />
-                </button>
-              </form>
-            </div>
-
-            <div className="space-y-2 text-xs pt-1">
-              <div className="flex items-center gap-2.5">
-                <Mail className="h-4 w-4 text-brand shrink-0" />
-                <span className="text-slate-400 hover:text-white transition-colors cursor-pointer">support@shopkart.com</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 text-brand shrink-0" />
-                <span className="text-slate-400 hover:text-white transition-colors cursor-pointer">1800-123-4567</span>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <MapPin className="h-4 w-4 text-brand shrink-0 mt-0.5" />
-                <span className="leading-relaxed">123 Commerce Street, Mumbai, 400001</span>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:gap-12">
+            <LinkGroup title="Shop" links={SHOP_LINKS} />
+            <LinkGroup title="Help" links={HELP_LINKS} />
           </div>
         </div>
-      </div>
 
-      {/* Bottom Section: Footer Meta */}
-      <div className="bg-[#080E10] py-3.5 border-t border-white/5 text-[11px]">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-          <p>© {new Date().getFullYear()} ShopKart. All rights reserved.</p>
-          
-          {/* Payment Badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            {['UPI', 'Razorpay', 'VISA', 'Mastercard', 'RuPay', 'NetBanking'].map(badge => (
-              <span key={badge} className="px-2.5 py-1 text-[10px] font-black text-slate-500 bg-white/[0.02] border border-white/[0.05] rounded-md tracking-wider">
-                {badge}
-              </span>
+        <div className="mt-6 flex flex-col-reverse items-start gap-3 border-t border-white/10 pt-5 text-xs sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} ShopKart · support@shopkart.com</p>
+          <div className="flex items-center gap-1.5">
+            {SOCIALS.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d={s.path} />
+                </svg>
+              </a>
             ))}
           </div>
         </div>
