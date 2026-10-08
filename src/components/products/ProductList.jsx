@@ -1,4 +1,30 @@
 import React, { useState } from 'react';
+
+import { PackageOpen } from 'lucide-react';
+import { ProductCard } from '@/components/products/ProductCard';
+
+export function ProductGridSkeleton({ count = 8 }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="overflow-hidden rounded-2xl border border-border bg-surface animate-pulse">
+          <div className="aspect-square bg-muted-bg" />
+          <div className="space-y-2 p-4">
+            <div className="h-2.5 w-1/3 rounded bg-muted-bg" />
+            <div className="h-3.5 w-5/6 rounded bg-muted-bg" />
+            <div className="h-3.5 w-2/3 rounded bg-muted-bg" />
+            <div className="flex items-center justify-between pt-3">
+              <div className="h-5 w-16 rounded bg-muted-bg" />
+              <div className="h-10 w-16 rounded-xl bg-muted-bg" />
+            </div>https://github.com/rabinarayanpadhy07/ShopKart-UI/pull/7/conflict?name=src%252Fcomponents%252Fproducts%252FProductList.jsx&ancestor_oid=e36381798f194a917ad182abc68d7e115bc46fda&base_oid=2931bc01eb58cd1abeef3281a60981400291c594&head_oid=5195bdc0743d9d60c578e17a5459198e16355194
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export const ProductList = React.memo(function ProductList({ products, onAddToCart, onAddToWishlist, emptyHint }) {
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Star, ShoppingBag, PackageOpen, Check, Eye, Sparkles } from 'lucide-react';
@@ -30,17 +56,30 @@ export const ProductList = React.memo(function ProductList({ products, onAddToCa
 
   if (products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-          <PackageOpen className="h-8 w-8 text-slate-400" strokeWidth={1.5} />
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface py-20 text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted-bg">
+          <PackageOpen className="h-7 w-7 text-ink-muted" strokeWidth={1.5} />
         </div>
-        <p className="text-base font-semibold text-slate-700">No products found</p>
-        <p className="text-sm text-slate-400 mt-1 max-w-xs">Try a different search or category</p>
+        <p className="text-base font-semibold text-ink">No products found</p>
+        <p className="mt-1 max-w-xs text-sm text-ink-muted">{emptyHint || 'Try a different search or category.'}</p>
       </div>
     );
   }
 
   return (
+
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+      {products.map((product, index) => (
+        <ProductCard
+          key={product.product_id}
+          product={product}
+          index={index}
+          justAdded={justAdded === product.product_id}
+          onAddToCart={onAddToCart ? handleAddToCart : undefined}
+          onAddToWishlist={onAddToWishlist}
+        />
+      ))}
+
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
       {products.map((product, index) => {
         // Resolve verified, authentic product photography
@@ -205,6 +244,7 @@ export const ProductList = React.memo(function ProductList({ products, onAddToCa
           </motion.article>
         );
       })}
+
     </div>
   );
 });

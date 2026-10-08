@@ -62,7 +62,7 @@ export function AdminFinance({
         </Card>
 
         {/* Category Sales Breakdown */}
-        <Card className="bg-white border border-slate-205 rounded-2xl p-5 shadow-xs md:col-span-2 text-left">
+        <Card className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs md:col-span-2 text-left">
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Overall Category Sales Distribution</h3>
           {overallLoading ? (
             <p className="text-xs text-slate-400 italic">Calculating categories...</p>
@@ -84,7 +84,7 @@ export function AdminFinance({
       {/* Custom Financial Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Report Form */}
-        <Card className="bg-white border border-slate-205 rounded-2xl p-5 shadow-xs text-left space-y-4">
+        <Card className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs text-left space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-800">Generate Audit Report</h3>
             <p className="text-xs text-slate-400">Select parameters to query billing database.</p>
@@ -135,7 +135,7 @@ export function AdminFinance({
                   id="year"
                   name="year"
                   required
-                  className="flex h-10 w-full rounded-xl border border-slate-350 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  className="flex h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   {Array.from({ length: 11 }, (_, i) => 2020 + i).map((y) => (
                     <option key={y} value={y}>
@@ -153,7 +153,7 @@ export function AdminFinance({
         </Card>
 
         {/* Audit calculation results */}
-        <Card className="bg-white border border-slate-205 rounded-2xl p-5 shadow-xs text-left lg:col-span-2 flex flex-col justify-between min-h-[300px]">
+        <Card className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs text-left lg:col-span-2 flex flex-col justify-between min-h-[300px]">
           <div>
             <h3 className="text-sm font-bold text-slate-800">Audit Calculation Results</h3>
             <p className="text-xs text-slate-400">Values generated from specific query parameters.</p>
@@ -170,7 +170,7 @@ export function AdminFinance({
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="bg-slate-50 rounded-2xl p-5 flex justify-between items-center border border-slate-150">
+                <div className="bg-slate-50 rounded-2xl p-5 flex justify-between items-center border border-slate-200">
                   <span className="text-xs font-bold text-slate-600">Sum Business Value</span>
                   <span className="text-2xl font-black text-slate-900">
                     ₹{customReportData.totalBusiness !== undefined ? parseFloat(customReportData.totalBusiness).toFixed(2) : "0.00"}
@@ -178,11 +178,11 @@ export function AdminFinance({
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-800 border-b border-slate-150 pb-2">Category Sales breakdown:</h4>
+                  <h4 className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-2">Category Sales breakdown:</h4>
                   {customReportData.categorySales && Object.keys(customReportData.categorySales).length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-40 overflow-y-auto pr-1">
                       {Object.entries(customReportData.categorySales).map(([cat, val]) => (
-                        <div key={cat} className="flex justify-between items-center text-xs py-2 px-3 bg-slate-50 border border-slate-150 rounded-xl">
+                        <div key={cat} className="flex justify-between items-center text-xs py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl">
                           <span className="text-slate-500 font-semibold">{cat}</span>
                           <span className="font-extrabold text-slate-800">{val} units</span>
                         </div>

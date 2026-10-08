@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { IMAGE_FALLBACK } from "@/lib/placeholder";
+import { formatPrice } from "@/lib/format";
 import { getProductImage } from "@/lib/productImages";
 import { getProducts } from "@/api/products";
 import { addAdminProduct, modifyAdminProduct, deleteAdminProduct } from "@/api/admin";
@@ -36,6 +37,7 @@ export function AdminProducts({
     stock: "",
     categoryId: "",
     imageUrl: "",
+    brand: "",
   });
 
   const debounceTimerRef = useRef(null);
@@ -105,6 +107,7 @@ export function AdminProducts({
         stock: parseInt(productForm.stock, 10),
         categoryId: parseInt(productForm.categoryId, 10),
         imageUrl: productForm.imageUrl,
+        brand: productForm.brand.trim(),
       };
 
       if (modalMode === "add") {
@@ -152,6 +155,7 @@ export function AdminProducts({
       stock: "",
       categoryId: categoriesList[0]?.categoryId || "",
       imageUrl: "",
+      brand: "",
     });
     setIsModalOpen(true);
   };
@@ -168,6 +172,7 @@ export function AdminProducts({
       stock: p.stock ? p.stock.toString() : "",
       categoryId: catObj ? catObj.categoryId : (categoriesList[0]?.categoryId || ""),
       imageUrl: firstImage,
+      brand: p.brand || "",
     });
     setIsModalOpen(true);
   };
@@ -177,21 +182,21 @@ export function AdminProducts({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Catalog Inventory</h2>
-          <p className="text-xs text-slate-400">Server-side paginated inventory management ({totalItems} total products).</p>
+          <h2 className="text-base font-bold text-ink">All products</h2>
+          <p className="text-xs text-ink-muted">{totalItems} products in your catalog</p>
         </div>
-        <Button onClick={openAddModal} className="font-bold text-xs h-9 cursor-pointer">
+        <Button onClick={openAddModal} size="sm" className="gap-0">
           <Plus className="mr-1.5 h-4 w-4" /> Add Product
         </Button>
       </div>
 
       {/* Search Toolbar */}
-      <div className="flex bg-white border border-slate-205 p-4 rounded-2xl shadow-xs">
+      <div className="flex rounded-2xl border border-border bg-surface p-3">
         <div className="flex-grow relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search products by Name or Category..."
+            placeholder="Search by name, brand or category…"
             value={searchQuery}
             onChange={handleSearchChange}
             className="text-xs h-10 pl-10"
@@ -201,29 +206,48 @@ export function AdminProducts({
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-slate-500 italic">Compiling inventory page...</div>
+        <div className="rounded-2xl border border-border bg-surface py-16 text-center text-sm text-ink-muted">Loading products…</div>
       ) : products.length === 0 ? (
-        <div className="bg-white border border-slate-205 rounded-2xl p-10 text-center text-slate-400 italic">
-          No inventory products found matching the criteria.
+        <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center text-sm text-ink-muted">
+          No products match your search.
         </div>
       ) : (
-        <div className="bg-white border border-slate-205 rounded-2xl overflow-hidden shadow-xs">
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <thead className="border-b border-border bg-muted-bg/60 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
                 <tr>
-                  <th className="p-4">Visual</th>
-                  <th className="p-4">Product ID</th>
-                  <th className="p-4">Listing Name</th>
-                  <th className="p-4">Category</th>
-                  <th className="p-4">Base Price</th>
-                  <th className="p-4">Stock Status</th>
-                  <th className="p-4 text-center">Actions</th>
+                  <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">Price</th>
+                  <th className="px-4 py-3">Stock</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {products.map((p) => {
                   return (
+                    <tr key={p.product_id} className="transition-colors hover:bg-muted-bg/40">
+                      <td className="px-4 py-3">
+                        <div className="flex min-w-[240px] items-center gap-3">
+                          <img
+                            src={firstImage || IMAGE_FALLBACK}
+                            alt=""
+                            className="h-11 w-11 shrink-0 rounded-xl border border-border bg-muted-bg object-contain p-1"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.src = IMAGE_FALLBACK;
+                            }}
+                          />
+                          <div className="min-w-0">
+                            <a href={"/product/" + p.product_id} target="_blank" rel="noopener noreferrer" className="block max-w-xs truncate font-semibold text-ink hover:text-brand">
+                              {p.name}
+                            </a>
+                            <p className="text-xs text-ink-muted">
+                              {p.brand ? p.brand + " · " : ""}#{p.product_id}
+                            </p>
+                          </div>
+                        </div>
                     <tr key={p.product_id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-4">
                         <img
@@ -236,11 +260,11 @@ export function AdminProducts({
                           }}
                         />
                       </td>
-                      <td className="p-4 font-mono text-xs text-slate-500 font-semibold">#{p.product_id}</td>
-                      <td className="p-4 font-bold text-slate-800 max-w-xs truncate">{p.name}</td>
-                      <td className="p-4 text-xs font-semibold text-slate-500">{p.category || "Uncategorized"}</td>
-                      <td className="p-4 font-extrabold text-slate-900">₹{parseFloat(p.price).toFixed(2)}</td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-muted-bg px-2.5 py-1 text-xs font-medium text-ink">{p.category || "Uncategorized"}</span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-ink">{formatPrice(p.price)}</td>
+                      <td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             p.stock <= 0
@@ -253,7 +277,7 @@ export function AdminProducts({
                           {p.stock} units
                         </span>
                       </td>
-                      <td className="p-4 text-center space-x-2">
+                      <td className="space-x-2 whitespace-nowrap px-4 py-3 text-right">
                         <Button
                           onClick={() => openEditModal(p)}
                           size="sm"
@@ -280,7 +304,7 @@ export function AdminProducts({
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-150 text-xs text-slate-600 bg-slate-50/50">
+            <div className="flex items-center justify-between border-t border-border bg-muted-bg/40 p-4 text-xs text-ink-muted">
               <span>
                 Page <strong className="text-slate-800">{page + 1}</strong> of <strong>{totalPages}</strong> ({totalItems} items)
               </span>
@@ -311,9 +335,9 @@ export function AdminProducts({
 
       {/* Add / Edit Product Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 text-slate-800 p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-sm animate-fade-up">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-border bg-surface p-6 text-ink shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <h3 className="text-base font-bold text-slate-900">
                 {modalMode === "add" ? "Create New Product" : `Edit Product #${productForm.productId}`}
               </h3>
@@ -346,7 +370,19 @@ export function AdminProducts({
                   placeholder="Detailed product features and specifications..."
                   value={productForm.description}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                  className="w-full rounded-xl border border-slate-350 bg-white p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Brand</label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Apple"
+                  maxLength={100}
+                  value={productForm.brand}
+                  onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
+                  className="text-xs h-9"
                 />
               </div>
 
@@ -385,7 +421,7 @@ export function AdminProducts({
                   required
                   value={productForm.categoryId}
                   onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })}
-                  className="w-full h-10 rounded-xl border border-slate-350 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   <option value="">Select Category</option>
                   {categoriesList.map((cat) => (
@@ -397,7 +433,14 @@ export function AdminProducts({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Cover image URL</label>
+                <div className="flex items-start gap-3">
+                  <img
+                    src={productForm.imageUrl || IMAGE_FALLBACK}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-xl border border-border bg-muted-bg object-contain p-1"
+                    onError={(e) => { e.currentTarget.src = IMAGE_FALLBACK; }}
+                  />
                 <Input
                   type="url"
                   placeholder="https://images.example.com/item.jpg"
@@ -405,6 +448,7 @@ export function AdminProducts({
                   onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
                   className="text-xs h-9"
                 />
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">

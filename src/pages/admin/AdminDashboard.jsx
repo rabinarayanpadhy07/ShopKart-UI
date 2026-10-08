@@ -7,7 +7,8 @@ import {
   Package,
   Layers,
   Users,
-  DollarSign,
+  IndianRupee,
+  Store,
   LogOut,
   Menu,
   X,
@@ -153,152 +154,143 @@ export default function AdminDashboard() {
   };
 
   const navItems = [
-    { id: "actions", label: "Overview", icon: LayoutDashboard },
+    { id: "actions", label: "Overview", icon: LayoutDashboard, description: "Store performance at a glance" },
     {
       id: "orders",
       label: "Orders",
       icon: ShoppingBag,
+      description: "Track, update and fulfil customer orders",
       badge: orders.filter((o) =>
         ["PENDING", "SUCCESS", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status)
       ).length,
     },
-    { id: "products", label: "Products", icon: Package },
-    { id: "categories", label: "Categories", icon: Layers },
-    { id: "users", label: "Users", icon: Users },
-    { id: "finance", label: "Financials", icon: DollarSign },
+    { id: "products", label: "Products", icon: Package, description: "Manage your catalog, pricing and stock" },
+    { id: "categories", label: "Categories", icon: Layers, description: "Organise how products are grouped" },
+    { id: "users", label: "Customers", icon: Users, description: "View and manage user accounts" },
+    { id: "finance", label: "Financials", icon: IndianRupee, description: "Revenue and sales analytics" },
   ];
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 w-full text-ink font-sans">
-      {/* Mobile Top Navigation bar */}
-      <div className="md:hidden flex items-center justify-between bg-slate-900 text-white p-4 shadow-md sticky top-0 z-50 w-full">
-        <Logo size="default" variant="light" />
-        <div className="flex items-center space-x-3">
-          <span className="text-xs font-semibold text-brand-muted">Admin Dashboard</span>
-          <button
-            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            className="p-2 hover:bg-slate-800 rounded-lg cursor-pointer"
-            aria-label="Toggle navigation menu"
-          >
-            {isMobileSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-      </div>
+  const activeItem = navItems.find((i) => i.id === activeTab) || navItems[0];
+  const showLabels = !isSidebarCollapsed || isMobileSidebarOpen;
 
-      {/* Responsive Sidebar */}
+  return (
+    <div className="flex min-h-screen w-full bg-background font-sans text-ink">
+      {/* Mobile drawer backdrop */}
+      {isMobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-[2px] md:hidden"
+        />
+      )}
+
+      {/* Sidebar */}
       <aside
-        className={`bg-slate-900 text-white flex flex-col justify-between shrink-0 transition-all duration-300 z-40 border-r border-slate-800
-          ${isMobileSidebarOpen ? "fixed inset-y-0 left-0 w-64 md:relative" : "hidden md:flex"}
-          ${isSidebarCollapsed ? "md:w-20" : "md:w-64"}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface transition-all duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0
+          ${isMobileSidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full"}
+          ${isSidebarCollapsed ? "md:w-[76px]" : "md:w-64"}
         `}
       >
-        <div>
-          {/* Logo Section */}
-          <div className="p-5 flex items-center justify-between border-b border-slate-800">
-            {!isSidebarCollapsed || isMobileSidebarOpen ? (
-              <Logo size="default" variant="light" />
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center font-bold text-white mx-auto">
-                SK
-              </div>
-            )}
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden md:block p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white cursor-pointer"
-              aria-label="Toggle sidebar collapse"
-            >
-              {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setIsMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-semibold transition-all cursor-pointer group
-                    ${isActive ? "bg-slate-800 text-brand shadow-sm" : "text-slate-400 hover:text-white hover:bg-slate-850"}
-                  `}
-                >
-                  <Icon
-                    className={`h-5 w-5 shrink-0 ${isActive ? "text-brand" : "text-slate-400 group-hover:text-white"}`}
-                  />
-                  {(!isSidebarCollapsed || isMobileSidebarOpen) && (
-                    <span className="flex-grow text-left">{item.label}</span>
-                  )}
-                  {item.badge > 0 && (!isSidebarCollapsed || isMobileSidebarOpen) && (
-                    <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+        <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-4">
+          {showLabels ? (
+            <Logo />
+          ) : (
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-black text-white">SK</div>
+          )}
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="hidden rounded-lg p-1.5 text-ink-muted hover:bg-muted-bg hover:text-ink md:block cursor-pointer"
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="rounded-lg p-1.5 text-ink-muted hover:bg-muted-bg md:hidden cursor-pointer"
+            aria-label="Close navigation"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* User Card at bottom of sidebar */}
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-2xl">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-brand font-black font-mono">
-              AD
-            </div>
-            {(!isSidebarCollapsed || isMobileSidebarOpen) && (
-              <div className="flex-grow text-left">
-                <p className="text-xs font-bold truncate">ShopKart Executive</p>
-                <p className="text-[10px] text-slate-500 font-semibold uppercase">Administrator</p>
-              </div>
-            )}
-            {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Admin sections">
+          {showLabels && <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">Manage</p>}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
               <button
-                onClick={handleLogout}
-                className="text-slate-500 hover:text-red-400 transition-colors p-1.5 hover:bg-slate-800 rounded-lg cursor-pointer"
-                title="Logout"
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setIsMobileSidebarOpen(false);
+                }}
+                title={showLabels ? undefined : item.label}
+                aria-current={isActive ? "page" : undefined}
+                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer
+                  ${isActive ? "bg-ink text-white" : "text-ink-muted hover:bg-muted-bg hover:text-ink"}
+                  ${showLabels ? "" : "justify-center"}
+                `}
               >
-                <LogOut className="h-4 w-4" />
+                <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+                {showLabels && <span className="flex-grow text-left">{item.label}</span>}
+                {item.badge > 0 && showLabels && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? "bg-white/20 text-white" : "bg-brand-light text-brand"}`}>
+                    {item.badge}
+                  </span>
+                )}
               </button>
-            )}
-          </div>
-          {isSidebarCollapsed && !isMobileSidebarOpen && (
-            <button
-              onClick={handleLogout}
-              className="mt-2 w-full flex justify-center py-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl cursor-pointer"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-border p-3">
+          <a
+            href="/"
+            className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted hover:bg-muted-bg hover:text-ink ${showLabels ? "" : "justify-center"}`}
+            title="View store"
+          >
+            <Store className="h-[18px] w-[18px] shrink-0" />
+            {showLabels && "View store"}
+          </a>
+          <button
+            onClick={handleLogout}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted hover:bg-red-50 hover:text-danger cursor-pointer ${showLabels ? "" : "justify-center"}`}
+            title="Log out"
+          >
+            <LogOut className="h-[18px] w-[18px] shrink-0" />
+            {showLabels && "Log out"}
+          </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-grow flex flex-col min-h-screen overflow-x-hidden">
-        <header className="hidden md:flex justify-between items-center py-5 px-8 bg-white border-b border-slate-200 shadow-xs">
-          <div className="text-left">
-            <h1 className="text-2xl font-extrabold text-slate-800 capitalize">
-              {activeTab === "actions" ? "Dashboard Overview" : `${activeTab} Management`}
-            </h1>
-            <p className="text-xs text-slate-400 mt-0.5">Control panel, metrics and actions for active site administration.</p>
+      {/* Main */}
+      <main className="flex min-h-screen min-w-0 flex-grow flex-col">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur md:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="rounded-lg p-2 text-ink-muted hover:bg-muted-bg md:hidden cursor-pointer"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold text-ink">{activeItem.label}</h1>
+              <p className="hidden truncate text-xs text-ink-muted sm:block">{activeItem.description}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-              <span className="w-6 h-6 rounded-full bg-brand-light text-brand flex items-center justify-center font-black text-[10px]">
-                AD
-              </span>
-              Administrator
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="hidden text-right sm:block">
+              <p className="text-xs font-semibold text-ink">Administrator</p>
+              <p className="text-[11px] text-ink-muted">ShopKart</p>
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-light text-xs font-bold text-brand">AD</div>
           </div>
         </header>
 
-        {/* Content Body */}
-        <div className="flex-grow p-4 md:p-8 space-y-6">
+        <div className="mx-auto w-full max-w-7xl flex-grow space-y-6 p-4 md:p-8">
           {activeTab === "actions" && (
             <AdminOverview
               overallStats={overallStats}

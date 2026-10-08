@@ -58,6 +58,12 @@ export async function getProductFilters(options = {}) {
   return data;
 }
 
+
+export function getProduct(productId, options = {}) {
+  // Not cached: the response carries live stock and the signed-in user.
+  return request(`/api/products/${encodeURIComponent(productId)}`, options);
+}
+
 export async function getProductById(id, options = {}) {
   const cacheKey = `product:${id}`;
   const cached = apiCache.get(cacheKey);
@@ -71,4 +77,5 @@ export async function getProductById(id, options = {}) {
   }
   return data;
 }
+
 

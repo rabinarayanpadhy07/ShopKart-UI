@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Truck, ShieldCheck, RotateCcw, Zap, AlertCircle } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Truck, ShieldCheck, RotateCcw, BadgeCheck, AlertCircle, X } from 'lucide-react';
 import { CategoryNavigation } from '@/components/layout/CategoryNavigation';
-import { ProductList } from '@/components/products/ProductList';
+import { ProductList, ProductGridSkeleton } from '@/components/products/ProductList';
+import { HeroSection } from '@/components/home/HeroSection';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 import { Button } from '@/components/ui/Button';
 import { getProducts } from '@/api/products';
@@ -11,14 +11,15 @@ import { addToCart } from '@/api/cart';
 import { addToWishlist } from '@/api/wishlist';
 import { useCartCount } from '@/hooks/useCartCount';
 import { useToast } from '@/components/ui/Toast';
+import { cn } from '@/lib/utils';
 
-const TRUST_BADGES = [
-  { Icon: Truck, label: 'Free Delivery', sub: 'On orders ₹499+' },
-  { Icon: ShieldCheck, label: 'Secure Payment', sub: '100% protected' },
-  { Icon: RotateCcw, label: 'Easy Returns', sub: '7-day policy' },
-  { Icon: Zap, label: 'Fast Shipping', sub: '2–3 business days' },
-];
+const PAGE_SIZE = 12;
 
+const PERKS = [
+  { Icon: Truck, label: 'Free delivery', sub: 'On orders above ₹499' },
+  { Icon: BadgeCheck, label: 'Genuine brands', sub: 'Sourced from authorised sellers' },
+  { Icon: RotateCcw, label: '7-day returns', sub: 'No-questions-asked' },
+  { Icon: ShieldCheck, label: 'Secure payments', sub: 'UPI, cards & netbanking' },
 const HERO_SLIDES = [
   {
     tag: '✨ Flagship Tech • Up to 40% Off',
@@ -49,99 +50,126 @@ const HERO_SLIDES = [
   },
 ];
 
-function ProductSkeleton() {
+const SORTS = {
+  featured: { label: 'Featured', sortBy: 'productId', sortDir: 'asc' },
+  newest: { label: 'Newest', sortBy: 'createdAt', sortDir: 'desc' },
+  'price-asc': { label: 'Price: low to high', sortBy: 'price', sortDir: 'asc' },
+  'price-desc': { label: 'Price: high to low', sortBy: 'price', sortDir: 'desc' },
+  rating: { label: 'Top rated', sortBy: 'averageRating', sortDir: 'desc' },
+};
+
+function Pagination({ page, totalPages, onChange }) {
+  if (totalPages <= 1) return null;
+  const pages = [];
+  for (let i = 0; i < totalPages; i++) {
+    if (i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1) pages.push(i);
+    else if (pages[pages.length - 1] !== '…') pages.push('…');
+  }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-150 p-4 space-y-3">
-          <div className="aspect-square bg-slate-100 rounded-xl" />
-          <div className="h-4 bg-slate-100 rounded w-3/4" />
-          <div className="h-3 bg-slate-100 rounded w-1/2" />
-          <div className="h-8 bg-slate-100 rounded mt-4" />
-        </div>
-      ))}
-    </div>
+    <nav className="mt-10 flex items-center justify-center gap-1.5" aria-label="Pagination">
+      <Button variant="outline" size="sm" disabled={page === 0} onClick={() => onChange(page - 1)} aria-label="Previous page" className="px-3">
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      {pages.map((p, i) =>
+        p === '…' ? (
+          <span key={`gap-${i}`} className="px-1.5 text-sm text-ink-muted">…</span>
+        ) : (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onChange(p)}
+            aria-current={p === page ? 'page' : undefined}
+            className={cn(
+              'h-9 min-w-9 rounded-xl px-3 text-sm font-semibold transition-colors cursor-pointer',
+              p === page ? 'bg-ink text-white' : 'text-ink-muted hover:bg-muted-bg hover:text-ink'
+            )}
+          >
+            {p + 1}
+          </button>
+        )
+      )}
+      <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => onChange(page + 1)} aria-label="Next page" className="px-3">
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </nav>
   );
 }
 
 export default function CustomerHomePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL is the source of truth so search/category links from any page, refreshes and
+  // the back button all work.
+  const searchQuery = searchParams.get('search') || '';
+  const selectedCategory = searchParams.get('category') || '';
+  const sortKey = SORTS[searchParams.get('sort')] ? searchParams.get('sort') : 'featured';
+  const inStockOnly = searchParams.get('inStock') === '1';
+  const currentPage = Math.max(0, parseInt(searchParams.get('page') || '0', 10) || 0);
+
   const [products, setProducts] = useState([]);
   const [username, setUsername] = useState('Guest');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Authentication-aware: do not request cart count for guests
   const isAuth = Boolean(username && username !== 'Guest');
   const { cartCount, loading: isCartLoading } = useCartCount({ enabled: isAuth, username });
   const toast = useToast();
 
-  // Unified single-request pipeline with AbortController for stale cancellation
+  const updateParams = useCallback((changes, { resetPage = true } = {}) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      for (const [k, v] of Object.entries(changes)) {
+        if (v === '' || v === null || v === undefined || v === false) next.delete(k);
+        else next.set(k, String(v));
+      }
+      if (resetPage) next.delete('page');
+      return next;
+    });
+  }, [setSearchParams]);
+
   useEffect(() => {
     const controller = new AbortController();
-    let isMounted = true;
+    setLoading(true);
+    setError(null);
 
-    const fetchProducts = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = { page: String(currentPage), size: '12' };
-        if (searchQuery) params.search = searchQuery;
-        if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
+    const { sortBy, sortDir } = SORTS[sortKey];
+    const params = { page: String(currentPage), size: String(PAGE_SIZE), sortBy, sortDir };
+    if (searchQuery) params.search = searchQuery;
+    if (selectedCategory) params.category = selectedCategory;
+    if (inStockOnly) params.inStock = 'true';
 
-        const data = await getProducts(params, { signal: controller.signal });
-        if (!isMounted) return;
-
+    getProducts(params, { signal: controller.signal })
+      .then((data) => {
         setUsername(data.user?.name || 'Guest');
         setProducts(data.products || []);
         setTotalPages(data.totalPages || 1);
-      } catch (err) {
-        if (err.name === 'AbortError' || controller.signal.aborted) {
-          return;
-        }
+        setTotalItems(data.totalItems || 0);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError' || controller.signal.aborted) return;
         console.error('Error fetching products:', err);
-        if (isMounted) {
-          setError(err.message || 'Failed to load products');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
+        setError(err.message || 'Failed to load products');
+        setLoading(false);
+      });
 
-    fetchProducts();
+    return () => controller.abort();
+  }, [searchQuery, selectedCategory, sortKey, inStockOnly, currentPage, reloadKey]);
 
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [searchQuery, selectedCategory, currentPage]);
+  const handleSearch = useCallback((q) => updateParams({ search: q, category: '' }), [updateParams]);
+  const handleCategoryClick = useCallback(
+    (category) => updateParams({ category: category === 'All' ? '' : category, search: '' }),
+    [updateParams]
+  );
 
-  // Hero carousel auto-rotate timer
-  useEffect(() => {
-    const t = setInterval(() => setActiveSlide(p => (p + 1) % HERO_SLIDES.length), 6000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Single-action handlers: batch state updates so only ONE network request fires
-  const handleSearch = useCallback((q) => {
-    setSelectedCategory('');
-    setCurrentPage(0);
-    setSearchQuery(q);
-  }, []);
-
-  const handleCategoryClick = useCallback((category) => {
-    const next = category === 'All' ? '' : category;
-    setSearchQuery('');
-    setCurrentPage(0);
-    setSelectedCategory(next);
-  }, []);
+  const goToPage = (p) => {
+    updateParams({ page: p || '' }, { resetPage: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleAddToCart = async (productId) => {
     if (!isAuth) {
@@ -154,7 +182,6 @@ export default function CustomerHomePage() {
       toast.success('Added to cart.');
       return true;
     } catch (e) {
-      console.error('Error adding to cart:', e);
       toast.error(e.message || 'Failed to add to cart');
       return false;
     }
@@ -174,7 +201,10 @@ export default function CustomerHomePage() {
     }
   };
 
-  const slide = HERO_SLIDES[activeSlide];
+  const isBrowsing = !searchQuery && !selectedCategory;
+  const title = searchQuery ? `Results for “${searchQuery}”` : selectedCategory || 'All products';
+  const firstItem = totalItems === 0 ? 0 : currentPage * PAGE_SIZE + 1;
+  const lastItem = Math.min(totalItems, (currentPage + 1) * PAGE_SIZE);
 
   return (
     <StoreLayout
@@ -182,165 +212,81 @@ export default function CustomerHomePage() {
       username={username}
       onSearch={handleSearch}
       initialSearch={searchQuery}
-      categoryNav={
-        <CategoryNavigation onCategoryClick={handleCategoryClick} activeCategory={selectedCategory || 'All'} />
-      }
-      mainClassName="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 pt-10 pb-6 md:pt-14 md:pb-8 space-y-10"
+      categoryNav={<CategoryNavigation onCategoryClick={handleCategoryClick} activeCategory={selectedCategory || 'All'} />}
+      mainClassName="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 py-6 md:py-8 space-y-8 md:space-y-10"
     >
-      {/* Hero Banner with optimized image priority */}
-      <section className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${slide.accent} border border-border shadow-sm`}>
-        <div className="grid md:grid-cols-2 items-center min-h-[240px] md:min-h-[320px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`text-${activeSlide}`}
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 16 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="p-6 md:p-10 space-y-4 z-10"
-            >
-              <span className="inline-block text-xs font-semibold text-brand bg-white/70 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-                {slide.tag}
-              </span>
-              <h1 className="text-3xl md:text-5xl font-extrabold text-ink leading-tight tracking-tight">
-                {slide.title}
-              </h1>
-              <p className="text-sm md:text-base text-ink-muted max-w-sm leading-relaxed">{slide.subtitle}</p>
-              <Button
-                onClick={() => { setSelectedCategory(slide.category); setCurrentPage(0); }}
-                className="rounded-xl px-6 gap-2 group"
-              >
-                {slide.cta}
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
-              </Button>
-              <div className="flex gap-2 pt-2">
-                {HERO_SLIDES.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveSlide(i)}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${i === activeSlide ? 'w-8 bg-brand' : 'w-1.5 bg-ink/15 hover:bg-brand-muted'}`}
-                    aria-label={`Slide ${i + 1}`}
-                  />
-                ))}
+      {isBrowsing && currentPage === 0 && (
+        <>
+          <HeroSection onSelectCategory={handleCategoryClick} />
+          <section className="grid grid-cols-2 divide-border rounded-2xl border border-border bg-surface md:grid-cols-4 md:divide-x">
+            {PERKS.map(({ Icon, label, sub }) => (
+              <div key={label} className="flex items-center gap-3 p-4">
+                <Icon className="h-5 w-5 shrink-0 text-brand" strokeWidth={2} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">{label}</p>
+                  <p className="truncate text-xs text-ink-muted">{sub}</p>
+                </div>
               </div>
-            </motion.div>
-          </AnimatePresence>
-          <div className="relative hidden md:flex items-center justify-center p-8 overflow-hidden">
-            <div className="absolute h-56 w-56 rounded-full bg-white/40 blur-2xl" aria-hidden="true" />
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={`img-${activeSlide}`}
-                src={slide.image}
-                alt=""
-                initial={{ opacity: 0, scale: 0.92, y: 8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                className="relative h-52 sm:h-60 md:h-68 w-auto max-w-full object-cover rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500"
-                loading={activeSlide === 0 ? "eager" : "lazy"}
-                fetchPriority={activeSlide === 0 ? "high" : "auto"}
-                decoding="async"
-              />
-            </AnimatePresence>
-          </div>
-        </div>
-        <button
-          onClick={() => setActiveSlide(p => (p - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
-          className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface hover:scale-105 cursor-pointer shadow-sm transition-all"
-          aria-label="Previous Slide"
-        >
-          <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
-        </button>
-        <button
-          onClick={() => setActiveSlide(p => (p + 1) % HERO_SLIDES.length)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-surface/80 border border-border flex items-center justify-center hover:bg-surface hover:scale-105 cursor-pointer shadow-sm transition-all"
-          aria-label="Next Slide"
-        >
-          <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
-        </button>
-      </section>
+            ))}
+          </section>
+        </>
+      )}
 
-      {/* Trust Badges */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {TRUST_BADGES.map(({ Icon, label, sub }) => (
-          <div
-            key={label}
-            className="flex items-center gap-3 bg-surface rounded-xl border border-border p-4 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-brand-muted/50"
-          >
-            <div className="h-10 w-10 rounded-xl bg-brand-light flex items-center justify-center shrink-0">
-              <Icon className="h-5 w-5 text-brand" strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-ink">{label}</p>
-              <p className="text-[11px] text-ink-muted">{sub}</p>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* Products Grid Section */}
-      <section>
-        <div className="flex items-baseline justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-ink">
-              {searchQuery ? `Results for “${searchQuery}”` : (selectedCategory || 'All Products')}
-            </h2>
-            <p className="text-sm text-ink-muted mt-0.5">
-              {loading ? 'Loading products...' : `${products.length} products shown`}
+      <section aria-labelledby="products-heading">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h2 id="products-heading" className="truncate text-xl font-bold text-ink md:text-2xl">{title}</h2>
+            <p className="mt-0.5 text-sm text-ink-muted">
+              {loading ? 'Loading…' : totalItems === 0 ? 'No items' : `Showing ${firstItem}–${lastItem} of ${totalItems}`}
             </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {(searchQuery || selectedCategory) && (
+              <button
+                type="button"
+                onClick={() => updateParams({ search: '', category: '' })}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink-muted hover:text-ink cursor-pointer"
+              >
+                Clear <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <label className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={inStockOnly}
+                onChange={(e) => updateParams({ inStock: e.target.checked ? '1' : '' })}
+                className="h-3.5 w-3.5 accent-brand"
+              />
+              In stock only
+            </label>
+            <select
+              value={sortKey}
+              onChange={(e) => updateParams({ sort: e.target.value === 'featured' ? '' : e.target.value })}
+              className="h-8 rounded-full border border-border bg-surface px-3 text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer"
+              aria-label="Sort products"
+            >
+              {Object.entries(SORTS).map(([key, s]) => (
+                <option key={key} value={key}>{s.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
         {error ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center border border-red-100 rounded-2xl bg-red-50/50 p-6">
-            <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50/50 p-6 py-16 text-center">
+            <AlertCircle className="mb-2 h-10 w-10 text-danger" />
             <p className="text-base font-semibold text-red-800">{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setLoading(true);
-                setError(null);
-                getProducts({ page: String(currentPage), size: '12', search: searchQuery, category: selectedCategory })
-                  .then(data => {
-                    setProducts(data.products || []);
-                    setTotalPages(data.totalPages || 1);
-                  })
-                  .catch(e => setError(e.message || 'Retry failed'))
-                  .finally(() => setLoading(false));
-              }}
-              className="mt-4"
-            >
+            <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)} className="mt-4">
               Retry
             </Button>
           </div>
         ) : loading ? (
-          <ProductSkeleton />
+          <ProductGridSkeleton />
         ) : (
           <ProductList products={products} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
         )}
 
-        {totalPages > 1 && !loading && (
-          <div className="flex items-center justify-center gap-3 mt-8 pt-6 border-t border-border">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 0}
-              onClick={() => setCurrentPage(p => p - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" /> Prev
-            </Button>
-            <span className="text-sm text-ink-muted font-medium">{currentPage + 1} / {totalPages}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage >= totalPages - 1}
-              onClick={() => setCurrentPage(p => p + 1)}
-            >
-              Next <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        {!loading && !error && <Pagination page={currentPage} totalPages={totalPages} onChange={goToPage} />}
       </section>
     </StoreLayout>
   );

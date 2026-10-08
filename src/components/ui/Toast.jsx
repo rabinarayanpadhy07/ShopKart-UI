@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
@@ -34,12 +34,13 @@ export function ToastProvider({ children }) {
     return id;
   }, [dismiss]);
 
-  const toast = {
+  // Memoized so consumers can safely list `toast` in effect dependencies.
+  const toast = useMemo(() => ({
     show: notify,
     success: (message, duration) => notify(message, 'success', duration),
     error: (message, duration) => notify(message, 'error', duration),
     info: (message, duration) => notify(message, 'info', duration),
-  };
+  }), [notify]);
 
   return (
     <ToastContext.Provider value={toast}>

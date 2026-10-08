@@ -40,7 +40,7 @@ export function AdminOverview({
     <div className="space-y-6 animate-fade-up">
       {/* Dynamic Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card className="hover:shadow-md transition-shadow border-slate-150 bg-white p-5 flex items-center justify-between text-left">
+        <Card className="hover:shadow-md transition-shadow border-slate-200 bg-white p-5 flex items-center justify-between text-left">
           <div className="space-y-1">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Overall Business Sales</p>
             {overallLoading ? (
@@ -102,7 +102,7 @@ export function AdminOverview({
       {/* Dynamic Alerts and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Low Stock Warnings */}
-        <Card className="lg:col-span-1 border-slate-205 bg-white flex flex-col justify-between text-left shadow-xs">
+        <Card className="lg:col-span-1 border-slate-200 bg-white flex flex-col justify-between text-left shadow-xs">
           <CardHeader className="border-b border-slate-100 p-4">
             <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" /> Inventory Stock Alerts
@@ -118,7 +118,7 @@ export function AdminOverview({
               </div>
             ) : (
               lowStockProducts.map((p) => (
-                <div key={p.product_id} className="flex justify-between items-center text-xs p-2 bg-slate-50 border border-slate-150 rounded-xl">
+                <div key={p.product_id} className="flex justify-between items-center text-xs p-2 bg-slate-50 border border-slate-200 rounded-xl">
                   <div className="truncate max-w-[150px]">
                     <p className="font-bold text-slate-800 truncate">{p.name}</p>
                     <p className="text-[10px] text-slate-400">ID: {p.product_id}</p>
@@ -139,7 +139,7 @@ export function AdminOverview({
         </Card>
 
         {/* Recent Orders Feed */}
-        <Card className="lg:col-span-2 border-slate-205 bg-white flex flex-col justify-between text-left shadow-xs">
+        <Card className="lg:col-span-2 border-slate-200 bg-white flex flex-col justify-between text-left shadow-xs">
           <CardHeader className="border-b border-slate-100 p-4">
             <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-brand" /> Recent Incoming Orders
@@ -156,6 +156,8 @@ export function AdminOverview({
                     <p className="font-mono text-xs font-bold text-slate-700">{order.orderId}</p>
                     <p className="text-[10px] text-slate-400">Date: {new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-slate-800 text-xs">₹{parseFloat(order.totalAmount).toFixed(2)}</span>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <span className="font-bold text-slate-850 text-xs">₹{parseFloat(order.totalAmount).toFixed(2)}</span>
                     <span
@@ -186,7 +188,7 @@ export function AdminOverview({
       </div>
 
       {/* Administrative Control Grid */}
-      <Card className="border-slate-205 bg-white text-left p-5 shadow-xs">
+      <Card className="border-slate-200 bg-white text-left p-5 shadow-xs">
         <div className="mb-4">
           <h3 className="text-sm font-bold text-slate-800">Administrative Actions</h3>
           <p className="text-xs text-slate-400">Quick shortcuts to execute administrative operations across the system.</p>
@@ -194,7 +196,7 @@ export function AdminOverview({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={onOpenAddProduct}
-            className="p-4 bg-slate-50 border border-slate-150 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
+            className="p-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
               <Plus className="h-4 w-4" />
@@ -205,7 +207,7 @@ export function AdminOverview({
 
           <button
             onClick={() => onTabChange("orders")}
-            className="p-4 bg-slate-50 border border-slate-150 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
+            className="p-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
               <ShoppingBag className="h-4 w-4" />
@@ -216,7 +218,7 @@ export function AdminOverview({
 
           <button
             onClick={() => onTabChange("categories")}
-            className="p-4 bg-slate-50 border border-slate-150 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
+            className="p-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
               <Layers className="h-4 w-4" />
@@ -227,7 +229,7 @@ export function AdminOverview({
 
           <button
             onClick={() => onTabChange("finance")}
-            className="p-4 bg-slate-50 border border-slate-150 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
+            className="p-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-200 rounded-xl transition-all text-left space-y-2 cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
               <DollarSign className="h-4 w-4" />
