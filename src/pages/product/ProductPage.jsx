@@ -16,6 +16,7 @@ import { addToCart } from '@/api/cart';
 import { addToWishlist } from '@/api/wishlist';
 import { IMAGE_FALLBACK } from '@/lib/placeholder';
 import { formatPrice, FREE_DELIVERY_THRESHOLD } from '@/lib/format';
+import { getProductImages } from '@/lib/productImages';
 import { cn } from '@/lib/utils';
 
 function Stars({ value, size = 'h-4 w-4' }) {
@@ -217,7 +218,7 @@ export default function ProductPage() {
     }
   };
 
-  const images = product?.images?.length ? product.images : [IMAGE_FALLBACK];
+  const images = product ? getProductImages(product) : [IMAGE_FALLBACK];
   const price = Number(product?.price || 0);
   const outOfStock = product && product.stock <= 0;
   const maxQty = product ? Math.max(1, Math.min(10, product.stock)) : 1;

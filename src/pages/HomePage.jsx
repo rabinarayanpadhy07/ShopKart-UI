@@ -20,34 +20,6 @@ const PERKS = [
   { Icon: BadgeCheck, label: 'Genuine brands', sub: 'Sourced from authorised sellers' },
   { Icon: RotateCcw, label: '7-day returns', sub: 'No-questions-asked' },
   { Icon: ShieldCheck, label: 'Secure payments', sub: 'UPI, cards & netbanking' },
-const HERO_SLIDES = [
-  {
-    tag: '✨ Flagship Tech • Up to 40% Off',
-    title: 'Next-Gen Performance, Within Your Reach',
-    subtitle: 'Experience authentic flagship smartphones, smart audio, and cutting-edge gear at guaranteed best prices.',
-    cta: 'Shop Flagship Mobiles',
-    category: 'Mobiles',
-    image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=800',
-    accent: 'from-orange-500/10 to-amber-50',
-  },
-  {
-    tag: '🔥 Fresh Season Drop',
-    title: 'Timeless Style Crafted for Comfort',
-    subtitle: 'Handpicked breathable cotton shirts, relaxed linen & authentic denim curated for effortless everyday confidence.',
-    cta: 'Explore Wardrobe',
-    category: 'Shirts',
-    image: 'https://images.pexels.com/photos/297933/pexels-photo-297933.jpeg?auto=compress&cs=tinysrgb&w=800',
-    accent: 'from-rose-500/10 to-pink-50',
-  },
-  {
-    tag: '💎 Exclusive Lifestyle Deals',
-    title: 'Curated Essentials for Modern Living',
-    subtitle: 'Ultra-slim leather wallets, polarized eyewear & smart appliances engineered for perfection.',
-    cta: 'Discover Accessories',
-    category: 'Accessories',
-    image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=800',
-    accent: 'from-blue-500/10 to-sky-50',
-  },
 ];
 
 const SORTS = {

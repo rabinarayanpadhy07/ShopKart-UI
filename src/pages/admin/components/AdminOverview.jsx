@@ -156,10 +156,8 @@ export function AdminOverview({
                     <p className="font-mono text-xs font-bold text-slate-700">{order.orderId}</p>
                     <p className="text-[10px] text-slate-400">Date: {new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-slate-800 text-xs">₹{parseFloat(order.totalAmount).toFixed(2)}</span>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <span className="font-bold text-slate-850 text-xs">₹{parseFloat(order.totalAmount).toFixed(2)}</span>
+                    <span className="font-bold text-slate-800 text-xs">₹{parseFloat(order.totalAmount).toFixed(2)}</span>
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                         order.status === "CANCELLED"

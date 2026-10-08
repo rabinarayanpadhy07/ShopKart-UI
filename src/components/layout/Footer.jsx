@@ -1,46 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
 import Logo from '@/components/layout/Logo';
-import { useToast } from '@/components/ui/Toast';
-
-export function Footer() {
-  const [email, setEmail] = useState('');
-  const toast = useToast();
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    toast.success(`Thank you for subscribing with: ${email}`);
-    setEmail('');
-  };
-
-  return (
-    <footer className="bg-[#0B1517] border-t border-teal-950 text-slate-400 mt-auto font-sans">
-      {/* Main Directory */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-9">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
-          {/* Brand Info & Social Links */}
-          <div className="space-y-3.5">
-            <Logo size="large" variant="light" />
-            <p className="text-xs leading-relaxed text-slate-400 max-w-xs">
-              Your everyday everything store — 100% genuine brands, curated lifestyle essentials, unbeatable prices, and lightning-fast delivery to your doorstep.
-            </p>
-
-            {/* Social Links using Inline SVGs for version safety */}
-            <div className="flex items-center gap-2.5">
-              {/* Facebook */}
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-slate-400 hover:text-white hover:bg-brand hover:border-brand transition-all duration-300"
-              >
-                <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-                </svg>
-              </a>
-
 
 const SHOP_LINKS = [
   { label: 'Mobiles', to: '/?category=Mobiles' },
